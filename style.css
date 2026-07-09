@@ -37,12 +37,28 @@
 body {
     font-family: var(--font-body);
     color: var(--text);
+    /* layered stage: warm key light above, felt-green table glow below,
+       deep blue-black falloff — fixed so the pinned show doesn't slide it */
     background:
-        radial-gradient(ellipse 120% 80% at 50% -10%, rgba(251, 191, 36, 0.06), transparent 60%),
-        radial-gradient(ellipse 90% 70% at 50% 110%, rgba(18, 50, 31, 0.55), transparent 65%),
-        var(--stage);
+        radial-gradient(90% 62% at 50% 112%, rgba(16, 58, 36, 0.5), transparent 64%),
+        radial-gradient(64% 48% at 50% 34%, rgba(84, 62, 160, 0.13), transparent 70%),
+        radial-gradient(140% 100% at 50% 0%, rgba(251, 191, 36, 0.05), transparent 55%),
+        linear-gradient(180deg, #0C0C1A 0%, #131329 52%, #08080F 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     touch-action: manipulation;
+}
+
+/* film grain over everything — kills gradient banding, adds texture */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.045;
+    mix-blend-mode: overlay;
 }
 
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
@@ -108,17 +124,24 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 
 #side-nav {
     position: fixed;
-    left: 20px;
+    left: 18px;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 15px;
     width: 200px;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 90px);
     overflow-y: auto;
     scrollbar-width: none;
     z-index: 900;
+    /* glass panel: the centred fan may pass behind it */
+    padding: 18px 16px;
+    background: linear-gradient(180deg, rgba(10, 10, 22, 0.78), rgba(10, 10, 22, 0.62));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(251, 191, 36, 0.14);
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
 }
 #side-nav::-webkit-scrollbar { display: none; }
 
@@ -220,8 +243,11 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
     font-weight: 400;
     font-size: clamp(3.2rem, 12vw, 7.5rem);
     line-height: 1.02;
-    color: var(--card-face);
-    text-shadow: 0 0 60px rgba(251, 191, 36, 0.25);
+    background: linear-gradient(180deg, #FFFDF5 18%, #F3E1B2 58%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 30px rgba(251, 191, 36, 0.22));
 }
 
 .player-line {
@@ -500,9 +526,28 @@ body.live #show {
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
-    /* keep the cards' 3D/z-index games inside the stage so they can
-       never composite above the fixed side nav */
     isolation: isolate;
+}
+
+/* spotlight pool + felt glow behind the cards */
+body.live #show::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(42% 46% at 50% 46%, rgba(251, 191, 36, 0.07), transparent 70%),
+        radial-gradient(75% 42% at 50% 102%, rgba(16, 58, 36, 0.45), transparent 68%);
+}
+
+/* soft vignette over the fan edges (under the popped card, z 200) */
+body.live #show::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 60;
+    background: radial-gradient(115% 115% at 50% 44%, transparent 56%, rgba(4, 4, 10, 0.5) 100%);
 }
 
 body.live .spread {
@@ -520,16 +565,22 @@ body.live .spread-card {
     left: 50%;
     width: min(440px, 92vw, 56vh);
     aspect-ratio: 5 / 7;
-    perspective: 1600px;
     cursor: pointer;
     will-change: transform;
 }
 
-/* The flip is a "half-flip swap" (rotate to 90°, swap sides, rotate back
-   from -90°) driven by animations.js — deliberately NOT preserve-3d with
-   backface-visibility: real 3D card planes form a 3D rendering context
-   that Chromium paints above fixed UI (the side nav) regardless of
-   z-index. Flat sides + autoAlpha swapping composite correctly. */
+/* decorative filler backs (created by animations.js, live mode only) */
+.spread-card.filler { display: none; }
+body.live .spread-card.filler {
+    display: block;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* The flip is a 2D edge-flip (scaleX through 0, swap sides) driven by
+   animations.js — deliberately no 3D transforms or preserve-3d: any 3D
+   card plane makes Chromium paint the cards above fixed UI (the side
+   nav) regardless of z-index. All-2D transforms composite correctly. */
 body.live .flip {
     position: absolute;
     inset: 0;
@@ -543,12 +594,16 @@ body.live .side {
 
 body.live .side.back {
     display: block;
-    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.55));
+    filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.6));
 }
 
 body.live .side.face {
     height: auto;
     opacity: 0; /* animations.js toggles sides with autoAlpha */
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.35) inset,
+        0 0 0 1px rgba(202, 138, 4, 0.22),
+        0 30px 80px rgba(0, 0, 0, 0.65);
 }
 
 /* HUD */

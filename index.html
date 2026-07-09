@@ -15,8 +15,8 @@
     <!-- SVG library: suits + Bicycle-style card back (all drawn, no images) -->
     <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
         <defs>
-            <pattern id="back-lattice" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <path d="M0 5.5H11M5.5 0V11" stroke="#FAF7F0" stroke-width="0.6" opacity="0.28" fill="none"/>
+            <pattern id="back-lattice" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <path d="M0 4H8M4 0V8" stroke="#FAF7F0" stroke-width="0.45" opacity="0.22" fill="none"/>
             </pattern>
         </defs>
         <symbol id="suit-spade" viewBox="0 0 24 24">
@@ -35,74 +35,117 @@
             <path d="M12 1.5l2.6 6.9 7.4.4-5.8 4.7 1.9 7.2L12 16.6l-6.1 4.1 1.9-7.2L2 8.8l7.4-.4L12 1.5z"/>
         </symbol>
 
-        <!-- Bicycle-style ornate back: white border card, red panel, filigree in white -->
+        <!-- Vintage engraved-style back (original artwork, bicycle-inspired):
+             white border card, red panel, dense white filigree -->
         <symbol id="card-back" viewBox="0 0 250 350">
-            <rect width="250" height="350" rx="14" fill="var(--card-face)"/>
-            <rect x="12" y="12" width="226" height="326" rx="8" fill="var(--back-red)"/>
-            <!-- ornate frame -->
+            <defs>
+                <!-- quarter corner ornament, defined for the top-left -->
+                <g id="bb-corner">
+                    <g fill="none" stroke="var(--card-face)">
+                        <path d="M31 78 A47 47 0 0 0 78 31" stroke-width="1.1"/>
+                        <path d="M31 68 A37 37 0 0 0 68 31" stroke-width="0.7"/>
+                        <path d="M31 58 A27 27 0 0 0 58 31" stroke-width="1.8"/>
+                        <path d="M31 48 A17 17 0 0 0 48 31" stroke-width="0.7"/>
+                        <path d="M31 88 Q45 84 51 74" stroke-width="1"/>
+                        <path d="M88 31 Q84 45 74 51" stroke-width="1"/>
+                        <line x1="34" y1="34" x2="45" y2="45" stroke-width="1.2"/>
+                    </g>
+                    <g fill="var(--card-face)">
+                        <circle cx="50.5" cy="50.5" r="2.7"/>
+                        <circle cx="39" cy="61" r="1.5"/>
+                        <circle cx="61" cy="39" r="1.5"/>
+                        <circle cx="34" cy="80" r="1.1"/>
+                        <circle cx="80" cy="34" r="1.1"/>
+                    </g>
+                </g>
+                <!-- spoked wheel, defined at origin -->
+                <g id="bb-wheel">
+                    <circle r="57" fill="none" stroke="var(--card-face)" stroke-width="3"/>
+                    <circle r="53.5" fill="none" stroke="var(--card-face)" stroke-width="1.4" stroke-dasharray="0.1 4.4" stroke-linecap="round"/>
+                    <circle r="50" fill="none" stroke="var(--card-face)" stroke-width="0.8"/>
+                    <g stroke="var(--card-face)" stroke-width="1.2">
+                        <line x1="0" y1="-48" x2="0" y2="48"/>
+                        <line x1="18.4" y1="-44.3" x2="-18.4" y2="44.3"/>
+                        <line x1="33.9" y1="-33.9" x2="-33.9" y2="33.9"/>
+                        <line x1="44.3" y1="-18.4" x2="-44.3" y2="18.4"/>
+                        <line x1="48" y1="0" x2="-48" y2="0"/>
+                        <line x1="44.3" y1="18.4" x2="-44.3" y2="-18.4"/>
+                        <line x1="33.9" y1="33.9" x2="-33.9" y2="-33.9"/>
+                        <line x1="18.4" y1="44.3" x2="-18.4" y2="-44.3"/>
+                    </g>
+                    <circle r="15" fill="var(--back-red)" stroke="var(--card-face)" stroke-width="2.2"/>
+                    <circle r="9.5" fill="none" stroke="var(--card-face)" stroke-width="0.8"/>
+                    <circle r="4" fill="var(--card-face)"/>
+                    <g fill="var(--card-face)">
+                        <circle cy="-12.2" r="1.5"/><circle cy="12.2" r="1.5"/>
+                        <circle cx="12.2" r="1.5"/><circle cx="-12.2" r="1.5"/>
+                        <circle cx="8.6" cy="-8.6" r="1.5"/><circle cx="8.6" cy="8.6" r="1.5"/>
+                        <circle cx="-8.6" cy="-8.6" r="1.5"/><circle cx="-8.6" cy="8.6" r="1.5"/>
+                    </g>
+                </g>
+                <!-- palmette (petal cluster), defined at origin pointing down -->
+                <g id="bb-palmette">
+                    <g fill="var(--card-face)">
+                        <path d="M0 -8 Q4.5 -1 0 10 Q-4.5 -1 0 -8"/>
+                        <path d="M-8.5 -6 Q-2 -2 -3 9 Q-10.5 0 -8.5 -6"/>
+                        <path d="M8.5 -6 Q2 -2 3 9 Q10.5 0 8.5 -6"/>
+                        <circle cx="-16" cy="2" r="1.7"/><circle cx="16" cy="2" r="1.7"/>
+                        <circle cx="-22" cy="5" r="1"/><circle cx="22" cy="5" r="1"/>
+                    </g>
+                    <g fill="none" stroke="var(--card-face)" stroke-width="1">
+                        <path d="M-12 -3 Q-20 -6 -25 1"/>
+                        <path d="M12 -3 Q20 -6 25 1"/>
+                    </g>
+                </g>
+                <!-- side diamond cluster, defined at origin -->
+                <g id="bb-side" fill="var(--card-face)">
+                    <path d="M0 -8 L4.6 0 0 8 -4.6 0 Z"/>
+                    <path d="M0 -19 L2.4 -15 0 -11 -2.4 -15 Z"/>
+                    <path d="M0 19 L2.4 15 0 11 -2.4 15 Z"/>
+                    <circle cy="-25" r="1.2"/><circle cy="25" r="1.2"/>
+                </g>
+            </defs>
+
+            <rect width="250" height="350" rx="13" fill="var(--card-face)"/>
+            <rect x="11" y="11" width="228" height="328" rx="7" fill="var(--back-red)"/>
+            <!-- frames: solid, hairline, pearl chain, hairline -->
             <g fill="none" stroke="var(--card-face)">
-                <rect x="19" y="19" width="212" height="312" rx="5" stroke-width="2"/>
-                <rect x="24.5" y="24.5" width="201" height="301" rx="3" stroke-width="1" stroke-dasharray="2 3.5"/>
-                <rect x="29" y="29" width="192" height="292" rx="2" stroke-width="0.75"/>
+                <rect x="17" y="17" width="216" height="316" rx="4" stroke-width="1.8"/>
+                <rect x="21.5" y="21.5" width="207" height="307" rx="3" stroke-width="0.7"/>
+                <rect x="25.5" y="25.5" width="199" height="299" rx="2.5" stroke-width="1.6" stroke-dasharray="0.1 5" stroke-linecap="round"/>
+                <rect x="29.5" y="29.5" width="191" height="291" rx="2" stroke-width="0.7"/>
             </g>
-            <!-- lattice field -->
+            <!-- engraved lattice field -->
             <rect x="31" y="31" width="188" height="288" fill="url(#back-lattice)"/>
-            <!-- corner fans (defined top-left, mirrored to the other three corners) -->
-            <g id="corner-fan" fill="none" stroke="var(--card-face)" stroke-width="1.4">
-                <path d="M31 65 A34 34 0 0 0 65 31"/>
-                <path d="M31 55 A24 24 0 0 0 55 31"/>
-                <path d="M31 45 A14 14 0 0 0 45 31"/>
-                <circle cx="40" cy="40" r="2.4" fill="var(--card-face)" stroke="none"/>
-            </g>
-            <use href="#corner-fan" transform="translate(250 0) scale(-1 1)"/>
-            <use href="#corner-fan" transform="translate(0 350) scale(1 -1)"/>
-            <use href="#corner-fan" transform="translate(250 350) scale(-1 -1)"/>
+            <!-- corners -->
+            <use href="#bb-corner"/>
+            <use href="#bb-corner" transform="translate(250 0) scale(-1 1)"/>
+            <use href="#bb-corner" transform="translate(0 350) scale(1 -1)"/>
+            <use href="#bb-corner" transform="translate(250 350) scale(-1 -1)"/>
             <!-- twin wheels -->
-            <g fill="none" stroke="var(--card-face)">
-                <circle cx="125" cy="120" r="54" stroke-width="3"/>
-                <circle cx="125" cy="120" r="46" stroke-width="1"/>
-                <circle cx="125" cy="230" r="54" stroke-width="3"/>
-                <circle cx="125" cy="230" r="46" stroke-width="1"/>
-            </g>
-            <g stroke="var(--card-face)" stroke-width="1.4">
-                <line x1="125" y1="76" x2="125" y2="164"/>
-                <line x1="147" y1="81.9" x2="103" y2="158.1"/>
-                <line x1="163.1" y1="98" x2="86.9" y2="142"/>
-                <line x1="169" y1="120" x2="81" y2="120"/>
-                <line x1="163.1" y1="142" x2="86.9" y2="98"/>
-                <line x1="147" y1="158.1" x2="103" y2="81.9"/>
-                <line x1="125" y1="186" x2="125" y2="274"/>
-                <line x1="147" y1="191.9" x2="103" y2="268.1"/>
-                <line x1="163.1" y1="208" x2="86.9" y2="252"/>
-                <line x1="169" y1="230" x2="81" y2="230"/>
-                <line x1="163.1" y1="252" x2="86.9" y2="208"/>
-                <line x1="147" y1="268.1" x2="103" y2="191.9"/>
-            </g>
-            <!-- hubs -->
-            <g>
-                <circle cx="125" cy="120" r="13" fill="var(--back-red)" stroke="var(--card-face)" stroke-width="2"/>
-                <circle cx="125" cy="120" r="4.5" fill="var(--card-face)"/>
-                <circle cx="125" cy="230" r="13" fill="var(--back-red)" stroke="var(--card-face)" stroke-width="2"/>
-                <circle cx="125" cy="230" r="4.5" fill="var(--card-face)"/>
-            </g>
-            <!-- center rosette where the wheels meet -->
-            <g>
-                <circle cx="125" cy="175" r="17" fill="var(--back-red)" stroke="var(--card-face)" stroke-width="2.4"/>
-                <circle cx="125" cy="175" r="3.4" fill="var(--card-face)"/>
+            <use href="#bb-wheel" transform="translate(125 113)"/>
+            <use href="#bb-wheel" transform="translate(125 237)"/>
+            <!-- winged center rosette where the wheels meet -->
+            <g transform="translate(125 175)">
+                <g fill="none" stroke="var(--card-face)" stroke-width="1.3">
+                    <path d="M-20 0 Q-36 -10 -52 -6 Q-42 0 -36 0 Q-46 6 -56 5 Q-44 12 -32 8 Q-38 16 -46 19 Q-32 18 -22 8"/>
+                    <path d="M20 0 Q36 -10 52 -6 Q42 0 36 0 Q46 6 56 5 Q44 12 32 8 Q38 16 46 19 Q32 18 22 8"/>
+                </g>
+                <circle r="19" fill="var(--back-red)" stroke="var(--card-face)" stroke-width="2.4"/>
+                <circle r="13" fill="none" stroke="var(--card-face)" stroke-width="0.8"/>
+                <circle r="3.6" fill="var(--card-face)"/>
                 <g fill="var(--card-face)">
-                    <circle cx="125" cy="164" r="1.9"/><circle cx="125" cy="186" r="1.9"/>
-                    <circle cx="114" cy="175" r="1.9"/><circle cx="136" cy="175" r="1.9"/>
-                    <circle cx="117.2" cy="167.2" r="1.9"/><circle cx="132.8" cy="167.2" r="1.9"/>
-                    <circle cx="117.2" cy="182.8" r="1.9"/><circle cx="132.8" cy="182.8" r="1.9"/>
+                    <circle cy="-8.5" r="1.6"/><circle cy="8.5" r="1.6"/>
+                    <circle cx="8.5" r="1.6"/><circle cx="-8.5" r="1.6"/>
+                    <circle cx="6" cy="-6" r="1.2"/><circle cx="6" cy="6" r="1.2"/>
+                    <circle cx="-6" cy="-6" r="1.2"/><circle cx="-6" cy="6" r="1.2"/>
                 </g>
             </g>
-            <!-- top / bottom flourishes -->
-            <g id="back-flourish" fill="var(--card-face)">
-                <path d="M125 38l5 8-5 8-5-8z"/>
-                <circle cx="111" cy="46" r="2.2"/><circle cx="139" cy="46" r="2.2"/>
-                <circle cx="101" cy="46" r="1.3"/><circle cx="149" cy="46" r="1.3"/>
-            </g>
-            <use href="#back-flourish" transform="translate(0 350) scale(1 -1)"/>
+            <!-- top / bottom palmettes, side diamonds -->
+            <use href="#bb-palmette" transform="translate(125 46)"/>
+            <use href="#bb-palmette" transform="translate(125 304) scale(1 -1)"/>
+            <use href="#bb-side" transform="translate(42 175)"/>
+            <use href="#bb-side" transform="translate(208 175)"/>
         </symbol>
     </svg>
 
@@ -145,13 +188,13 @@
         <ol class="spread">
 
             <!-- 1 · A♦ · UCLA -->
-            <li class="spread-card" id="about" data-section="about" data-act="ACT I · EDUCATION" aria-label="Act one, Education: UCLA">
+            <li class="spread-card" id="about" data-section="about" data-act="EDUCATION" aria-label="Education: UCLA">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top red" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
                         <span class="ci bottom red" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <p class="face-act">ACT I · EDUCATION</p>
+                        <p class="face-act">EDUCATION</p>
                         <h3>UCLA</h3>
                         <p class="face-meta">2025 – 2029</p>
                         <p class="face-sub">B.S. Mathematics of Computation · GPA 4.0/4.0</p>
@@ -165,13 +208,13 @@
             </li>
 
             <!-- 2 · K♦ · Singapore American School -->
-            <li class="spread-card" data-section="about" data-act="ACT I · EDUCATION" aria-label="Act one, Education: Singapore American School">
+            <li class="spread-card" data-section="about" data-act="EDUCATION" aria-label="Education: Singapore American School">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top red" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
                         <span class="ci bottom red" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <p class="face-act">ACT I · EDUCATION</p>
+                        <p class="face-act">EDUCATION</p>
                         <h3>Singapore American School</h3>
                         <p class="face-meta">2021 – 2025</p>
                         <p class="face-sub">High School Diploma · GPA 4.41</p>
@@ -181,13 +224,13 @@
             </li>
 
             <!-- 3 · A♠ · Research Interest Matching -->
-            <li class="spread-card" id="projects" data-section="projects" data-act="ACT II · PROJECTS" aria-label="Act two, Projects: Research Interest Matching">
+            <li class="spread-card" id="projects" data-section="projects" data-act="PROJECTS" aria-label="Projects: Research Interest Matching">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top black" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
                         <span class="ci bottom black" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <p class="face-act">ACT II · PROJECTS</p>
+                        <p class="face-act">PROJECTS</p>
                         <h3>Research Interest Matching</h3>
                         <p class="face-meta">Nov. 2025 – Dec. 2025</p>
                         <ul>
@@ -201,13 +244,13 @@
             </li>
 
             <!-- 4 · K♠ · Double Major Optimization -->
-            <li class="spread-card" data-section="projects" data-act="ACT II · PROJECTS" aria-label="Act two, Projects: Double Major Completion Optimization">
+            <li class="spread-card" data-section="projects" data-act="PROJECTS" aria-label="Projects: Double Major Completion Optimization">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top black" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
                         <span class="ci bottom black" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <p class="face-act">ACT II · PROJECTS</p>
+                        <p class="face-act">PROJECTS</p>
                         <h3>Double Major Completion Optimization</h3>
                         <p class="face-meta">Sept. 2025 – Current</p>
                         <ul>
@@ -221,13 +264,13 @@
             </li>
 
             <!-- 5 · Q♥ · Envy Data Analysis -->
-            <li class="spread-card" data-section="projects" data-act="ACT II · PROJECTS" aria-label="Act two, Projects: Data analysis of factors influencing envy">
+            <li class="spread-card" data-section="projects" data-act="PROJECTS" aria-label="Projects: Data analysis of factors influencing envy">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
                         <span class="ci bottom red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
-                        <p class="face-act">ACT II · PROJECTS</p>
+                        <p class="face-act">PROJECTS</p>
                         <h3>Factors Influencing Envy</h3>
                         <p class="face-meta">Oct. 2025 – Dec. 2025 · Project Lead at Datares</p>
                         <ul>
@@ -241,13 +284,13 @@
             </li>
 
             <!-- 6 · J♣ · Card Magic Learning Site -->
-            <li class="spread-card" data-section="projects" data-act="ACT II · PROJECTS" aria-label="Act two, Projects: Interactive learning website for card magic">
+            <li class="spread-card" data-section="projects" data-act="PROJECTS" aria-label="Projects: Interactive learning website for card magic">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top black" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-club"/></svg></span>
                         <span class="ci bottom black" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <p class="face-act">ACT II · PROJECTS</p>
+                        <p class="face-act">PROJECTS</p>
                         <h3>Interactive Learning Website for Card Magic</h3>
                         <p class="face-meta">Oct. 2025 – Current</p>
                         <ul>
@@ -261,13 +304,13 @@
             </li>
 
             <!-- 7 · K♣ · Futurum Academy -->
-            <li class="spread-card" id="experience" data-section="experience" data-act="ACT III · EXPERIENCE" aria-label="Act three, Experience: Engineer Intern at Futurum Academy">
+            <li class="spread-card" id="experience" data-section="experience" data-act="EXPERIENCE" aria-label="Experience: Engineer Intern at Futurum Academy">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top black" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-club"/></svg></span>
                         <span class="ci bottom black" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <p class="face-act">ACT III · EXPERIENCE</p>
+                        <p class="face-act">EXPERIENCE</p>
                         <h3>Engineer Intern</h3>
                         <p class="face-meta">Aug 2024 – Dec 2024 · Futurum Academy Singapore</p>
                         <ul>
@@ -280,13 +323,13 @@
             </li>
 
             <!-- 8 · Q♣ · iOS App -->
-            <li class="spread-card" data-section="experience" data-act="ACT III · EXPERIENCE" aria-label="Act three, Experience: Self-employed iOS developer">
+            <li class="spread-card" data-section="experience" data-act="EXPERIENCE" aria-label="Experience: Self-employed iOS developer">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top black" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-club"/></svg></span>
                         <span class="ci bottom black" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <p class="face-act">ACT III · EXPERIENCE</p>
+                        <p class="face-act">EXPERIENCE</p>
                         <h3>Self-Employed Developer</h3>
                         <p class="face-meta">Sept 2023 – Mar 2024 · Mobile App Development</p>
                         <ul>
@@ -299,13 +342,13 @@
             </li>
 
             <!-- 9 · J♦ · SaMi -->
-            <li class="spread-card" data-section="experience" data-act="ACT III · EXPERIENCE" aria-label="Act three, Experience: Director of Singapore chapter, San Antonio Math Include">
+            <li class="spread-card" data-section="experience" data-act="EXPERIENCE" aria-label="Experience: Director of Singapore chapter, San Antonio Math Include">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top red" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
                         <span class="ci bottom red" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <p class="face-act">ACT III · EXPERIENCE</p>
+                        <p class="face-act">EXPERIENCE</p>
                         <h3>Director of Singapore Chapter</h3>
                         <p class="face-meta">May – Sept 2023 · San Antonio Math Include</p>
                         <ul>
@@ -318,13 +361,13 @@
             </li>
 
             <!-- 10 · A♥ · NUS Research -->
-            <li class="spread-card" id="research" data-section="research" data-act="ACT IV · RESEARCH" aria-label="Act four, Research: Student researcher at National University of Singapore">
+            <li class="spread-card" id="research" data-section="research" data-act="RESEARCH" aria-label="Research: Student researcher at National University of Singapore">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top red" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
                         <span class="ci bottom red" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
-                        <p class="face-act">ACT IV · RESEARCH</p>
+                        <p class="face-act">RESEARCH</p>
                         <h3>Student Researcher</h3>
                         <p class="face-meta">June – Aug 2025 · National University of Singapore</p>
                         <p class="face-sub">Supervised by Liang Zhenkai, Associate Professor of Computer Science</p>
@@ -337,13 +380,13 @@
             </li>
 
             <!-- 11 · Q♦ · Publications -->
-            <li class="spread-card" data-section="research" data-act="ACT IV · RESEARCH" aria-label="Act four, Research: Publications">
+            <li class="spread-card" data-section="research" data-act="RESEARCH" aria-label="Research: Publications">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
                         <span class="ci bottom red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <p class="face-act">ACT IV · RESEARCH</p>
+                        <p class="face-act">RESEARCH</p>
                         <h3>Publications</h3>
                         <div class="publication">
                             <p class="cite">Tang, Y., Li, Z., Yu, J., &amp; <strong>Yang, L.</strong> (2025). <em>A Simple Approach of Chinese Poetry Generation Using Pre-trained LLMs.</em> 106–112. doi:10.1145/3726101.3726121</p>
@@ -360,14 +403,14 @@
             </li>
 
             <!-- 12 · 10♠ · Skills -->
-            <li class="spread-card" id="skills" data-section="skills" data-act="ACT V · SKILLS" aria-label="Act five, Skills">
+            <li class="spread-card" id="skills" data-section="skills" data-act="SKILLS" aria-label="Skills">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face">
                         <span class="ci top black" aria-hidden="true">10<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
                         <span class="ci bottom black" aria-hidden="true">10<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <p class="face-act">ACT V · SKILLS</p>
-                        <h3>Sleight of Hand</h3>
+                        <p class="face-act">SKILLS</p>
+                        <h3>Skills</h3>
                         <div class="skill-row"><span class="skill-cat">Languages</span><span class="face-tags"><span class="tag">Python</span><span class="tag">C++</span><span class="tag">SQL</span><span class="tag">Java</span></span></div>
                         <div class="skill-row"><span class="skill-cat">Frameworks</span><span class="face-tags"><span class="tag">NumPy</span><span class="tag">Pandas</span><span class="tag">Seaborn</span><span class="tag">BeautifulSoup</span><span class="tag">FastAPI</span><span class="tag">Next.js</span></span></div>
                         <div class="skill-row"><span class="skill-cat">Databases</span><span class="face-tags"><span class="tag">MySQL</span><span class="tag">SQLAlchemy</span></span></div>
@@ -378,28 +421,27 @@
             </li>
 
             <!-- 13 · JOKER · Contact -->
-            <li class="spread-card" id="contact" data-section="contact" data-act="ENCORE · CONTACT" aria-label="Encore, Contact">
+            <li class="spread-card" id="contact" data-section="contact" data-act="CONTACT" aria-label="Contact">
                 <div class="flip">
                     <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
                     <div class="side face joker">
                         <span class="ci top red joker-ci" aria-hidden="true">★<br>J<br>O<br>K<br>E<br>R</span>
                         <span class="ci bottom red joker-ci" aria-hidden="true">★<br>J<br>O<br>K<br>E<br>R</span>
-                        <p class="face-act">ENCORE</p>
+                        <p class="face-act">CONTACT</p>
                         <svg class="joker-mark" aria-hidden="true"><use href="#joker-star"/></svg>
-                        <h3>Take a Bow</h3>
-                        <p class="face-sub">The show works best with an audience — say hello.</p>
+                        <h3>Get in Touch</h3>
+                        <p class="face-sub">Always up for a good conversation — say hello.</p>
                         <div class="contact-links">
                             <a href="mailto:thelegendy@g.ucla.edu" class="hud-btn">Email</a>
                             <a href="https://linkedin.com/in/legendyang" class="hud-btn" target="_blank" rel="noopener">LinkedIn</a>
                             <a href="https://github.com/Legaand" class="hud-btn" target="_blank" rel="noopener">GitHub</a>
                         </div>
-                        <p class="fin">— FIN —</p>
                     </div>
                 </div>
             </li>
         </ol>
 
-        <p class="show-hint" aria-hidden="true">keep scrolling — every card takes the stage</p>
+        <p class="show-hint" aria-hidden="true">keep scrolling — each card reveals more</p>
     </section>
 
     <footer>

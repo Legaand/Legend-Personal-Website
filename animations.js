@@ -33,85 +33,96 @@
 
     let st = null;
     let tl = null;
+    let fillers = null;
+
+    // decorative face-down cards interleaved between the content cards so
+    // the fan reads as a full ribbon spread (live mode only)
+    function ensureFillers() {
+        if (fillers) return;
+        const spreadEl = document.querySelector('.spread');
+        fillers = [];
+        for (let k = 0; k <= N; k++) {
+            const li = document.createElement('li');
+            li.className = 'spread-card filler';
+            li.setAttribute('aria-hidden', 'true');
+            li.innerHTML = '<div class="flip"><div class="side back"><svg><use href="#card-back"/></svg></div></div>';
+            spreadEl.appendChild(li);
+            fillers.push(li);
+        }
+    }
 
     function build() {
+        ensureFillers();
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         const cardW = cards[0].offsetWidth;
 
-        // the side nav (wide screens) owns the left column: Chromium paints
-        // the transformed cards above fixed UI no matter the z-index, so the
-        // stage simply centres itself in the space to the right of it
-        const sideNav = document.getElementById('side-nav');
-        const navW = sideNav && getComputedStyle(sideNav).display !== 'none'
-            ? sideNav.getBoundingClientRect().right + 20
-            : 0;
-        const cx = navW / 2; // x shift of the stage centre away from viewport centre
-
-        hud.style.left = 'calc(50% + ' + cx + 'px)';
-        if (hint) hint.style.left = 'calc(50% + ' + cx + 'px)';
-
-        const fanW = Math.min(165, Math.max(94, vw * 0.14));
+        const fanW = Math.min(150, Math.max(86, vw * 0.125));
         const fanScale = fanW / cardW;
-        const spreadW = Math.min((vw - navW) * 0.86, 1040);
-        const maxA = vw < 640 ? 42 : 32;
+        const spreadW = Math.min(vw * 0.84, 1100);
+        const maxA = vw < 640 ? 44 : 34;
         const R = spreadW / (2 * Math.sin(rad(maxA)));
         const baseY = vh * 0.17;   // fan apex just below stage centre
         const popY = -vh * 0.015;  // popped card floats just above centre
 
-        const fan = cards.map((_, i) => {
-            const a = N === 1 ? 0 : -maxA + (i / (N - 1)) * 2 * maxA;
+        // slots along the arc: filler, card, filler, card, ... filler
+        const M = N + fillers.length;
+        const slotPos = (j) => {
+            const a = -maxA + (j / (M - 1)) * 2 * maxA;
             return {
-                x: cx + R * Math.sin(rad(a)),
+                x: R * Math.sin(rad(a)),
                 y: baseY + R * (1 - Math.cos(rad(a))),
                 rotation: a,
             };
-        });
+        };
+        const fan = cards.map((_, i) => slotPos(2 * i + 1));
+        const fanFill = fillers.map((_, k) => slotPos(2 * k));
 
         // start: a squared-up deck resting where the fan's centre will be
-        cards.forEach((card, i) => {
-            gsap.set(card, {
-                xPercent: -50,
-                yPercent: -50,
-                x: cx,
-                y: baseY + 26,
-                rotation: (i % 3) - 1,
-                scale: fanScale,
-                zIndex: i + 1,
-            });
+        const deckSet = (el, slot) => gsap.set(el, {
+            xPercent: -50,
+            yPercent: -50,
+            x: 0,
+            y: baseY + 26,
+            rotation: (slot % 3) - 1,
+            scale: fanScale,
+            zIndex: slot + 1,
         });
-        gsap.set(flips, { rotationY: 0, transformOrigin: '50% 50%' });
+        cards.forEach((card, i) => deckSet(card, 2 * i + 1));
+        fillers.forEach((f, k) => deckSet(f, 2 * k));
+        gsap.set(flips, { scaleX: 1, transformOrigin: '50% 50%' });
         gsap.set(backs, { autoAlpha: 1 });
         gsap.set(faces, { autoAlpha: 0 });
         if (hint) gsap.set(hint, { opacity: 1 });
 
         tl = gsap.timeline({ paused: true });
 
-        // segment 0 — the ribbon spread
-        cards.forEach((card, i) => {
-            tl.to(card, { ...fan[i], duration: 0.7, ease: 'power2.out' }, 0.02 * i);
-        });
+        // segment 0 — the ribbon spread (all slots, staggered along the arc)
+        for (let j = 0; j < M; j++) {
+            const el = j % 2 ? cards[(j - 1) / 2] : fillers[j / 2];
+            const p = j % 2 ? fan[(j - 1) / 2] : fanFill[j / 2];
+            tl.to(el, { ...p, duration: 0.7, ease: 'power2.out' }, 0.008 * j);
+        }
         if (hint) tl.to(hint, { opacity: 0, duration: 0.3 }, 0.9);
 
-        // one segment per card — rise, half-flip swap, hold, return
+        // one segment per card — rise, edge-flip swap, hold, return.
+        // The flip is 2D (scaleX through 0) on purpose: any 3D transform here
+        // makes Chromium paint the cards above fixed UI like the side nav.
         cards.forEach((card, i) => {
             const seg = 1 + i;
-            tl.set(card, { zIndex: 100 }, seg + 0.001);
-            tl.to(card, { x: cx, y: popY, rotation: 0, scale: 1, duration: 0.24, ease: 'power2.inOut' }, seg);
-            // flip open: edge-on at 90°, swap sides, finish from -90°
-            tl.to(flips[i], { rotationY: 90, duration: 0.1, ease: 'power1.in' }, seg + 0.08);
+            tl.set(card, { zIndex: 200 }, seg + 0.001);
+            tl.to(card, { x: 0, y: popY, rotation: 0, scale: 1, duration: 0.24, ease: 'power2.inOut' }, seg);
+            tl.to(flips[i], { scaleX: 0.04, duration: 0.1, ease: 'power1.in' }, seg + 0.08);
             tl.set(backs[i], { autoAlpha: 0 }, seg + 0.18);
             tl.set(faces[i], { autoAlpha: 1 }, seg + 0.18);
-            tl.set(flips[i], { rotationY: -90 }, seg + 0.18);
-            tl.to(flips[i], { rotationY: 0, duration: 0.1, ease: 'power1.out' }, seg + 0.181);
+            tl.to(flips[i], { scaleX: 1, duration: 0.1, ease: 'power1.out' }, seg + 0.181);
             // flip shut on the way back
-            tl.to(flips[i], { rotationY: -90, duration: 0.09, ease: 'power1.in' }, seg + 0.76);
+            tl.to(flips[i], { scaleX: 0.04, duration: 0.09, ease: 'power1.in' }, seg + 0.76);
             tl.set(faces[i], { autoAlpha: 0 }, seg + 0.85);
             tl.set(backs[i], { autoAlpha: 1 }, seg + 0.85);
-            tl.set(flips[i], { rotationY: 90 }, seg + 0.85);
-            tl.to(flips[i], { rotationY: 0, duration: 0.09, ease: 'power1.out' }, seg + 0.851);
+            tl.to(flips[i], { scaleX: 1, duration: 0.09, ease: 'power1.out' }, seg + 0.851);
             tl.to(card, { ...fan[i], scale: fanScale, duration: 0.22, ease: 'power2.inOut' }, seg + 0.78);
-            tl.set(card, { zIndex: i + 1 }, seg + 0.999);
+            tl.set(card, { zIndex: 2 * i + 2 }, seg + 0.999);
         });
 
         // resting points: the open fan, then each card's spotlight hold
@@ -150,6 +161,7 @@
         if (st) st.kill();
         if (tl) tl.kill();
         gsap.set(cards, { clearProps: 'all' });
+        if (fillers) gsap.set(fillers, { clearProps: 'all' });
         gsap.set(flips, { clearProps: 'all' });
         gsap.set(backs, { clearProps: 'all' });
         gsap.set(faces, { clearProps: 'all' });
