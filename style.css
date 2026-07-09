@@ -500,6 +500,9 @@ body.live #show {
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+    /* keep the cards' 3D/z-index games inside the stage so they can
+       never composite above the fixed side nav */
+    isolation: isolate;
 }
 
 body.live .spread {
@@ -522,17 +525,19 @@ body.live .spread-card {
     will-change: transform;
 }
 
+/* The flip is a "half-flip swap" (rotate to 90°, swap sides, rotate back
+   from -90°) driven by animations.js — deliberately NOT preserve-3d with
+   backface-visibility: real 3D card planes form a 3D rendering context
+   that Chromium paints above fixed UI (the side nav) regardless of
+   z-index. Flat sides + autoAlpha swapping composite correctly. */
 body.live .flip {
     position: absolute;
     inset: 0;
-    transform-style: preserve-3d;
 }
 
 body.live .side {
     position: absolute;
     inset: 0;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
     border-radius: max(10px, 3.2cqi);
 }
 
@@ -542,8 +547,8 @@ body.live .side.back {
 }
 
 body.live .side.face {
-    transform: rotateY(180deg);
     height: auto;
+    opacity: 0; /* animations.js toggles sides with autoAlpha */
 }
 
 /* HUD */

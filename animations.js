@@ -25,6 +25,8 @@
     const hudCount = document.getElementById('hud-count');
     const hint = document.querySelector('.show-hint');
     const flips = cards.map((c) => c.querySelector('.flip'));
+    const backs = cards.map((c) => c.querySelector('.side.back'));
+    const faces = cards.map((c) => c.querySelector('.side.face'));
 
     const SEGMENTS = N + 1; // segment 0 = deck spreads into the fan
     const rad = (d) => (d * Math.PI) / 180;
@@ -36,9 +38,22 @@
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         const cardW = cards[0].offsetWidth;
+
+        // the side nav (wide screens) owns the left column: Chromium paints
+        // the transformed cards above fixed UI no matter the z-index, so the
+        // stage simply centres itself in the space to the right of it
+        const sideNav = document.getElementById('side-nav');
+        const navW = sideNav && getComputedStyle(sideNav).display !== 'none'
+            ? sideNav.getBoundingClientRect().right + 20
+            : 0;
+        const cx = navW / 2; // x shift of the stage centre away from viewport centre
+
+        hud.style.left = 'calc(50% + ' + cx + 'px)';
+        if (hint) hint.style.left = 'calc(50% + ' + cx + 'px)';
+
         const fanW = Math.min(165, Math.max(94, vw * 0.14));
         const fanScale = fanW / cardW;
-        const spreadW = Math.min(vw * 0.86, 1040);
+        const spreadW = Math.min((vw - navW) * 0.86, 1040);
         const maxA = vw < 640 ? 42 : 32;
         const R = spreadW / (2 * Math.sin(rad(maxA)));
         const baseY = vh * 0.17;   // fan apex just below stage centre
@@ -47,7 +62,7 @@
         const fan = cards.map((_, i) => {
             const a = N === 1 ? 0 : -maxA + (i / (N - 1)) * 2 * maxA;
             return {
-                x: R * Math.sin(rad(a)),
+                x: cx + R * Math.sin(rad(a)),
                 y: baseY + R * (1 - Math.cos(rad(a))),
                 rotation: a,
             };
@@ -58,7 +73,7 @@
             gsap.set(card, {
                 xPercent: -50,
                 yPercent: -50,
-                x: 0,
+                x: cx,
                 y: baseY + 26,
                 rotation: (i % 3) - 1,
                 scale: fanScale,
@@ -66,6 +81,8 @@
             });
         });
         gsap.set(flips, { rotationY: 0, transformOrigin: '50% 50%' });
+        gsap.set(backs, { autoAlpha: 1 });
+        gsap.set(faces, { autoAlpha: 0 });
         if (hint) gsap.set(hint, { opacity: 1 });
 
         tl = gsap.timeline({ paused: true });
@@ -76,14 +93,24 @@
         });
         if (hint) tl.to(hint, { opacity: 0, duration: 0.3 }, 0.9);
 
-        // one segment per card — rise, flip, hold, return
+        // one segment per card — rise, half-flip swap, hold, return
         cards.forEach((card, i) => {
             const seg = 1 + i;
             tl.set(card, { zIndex: 100 }, seg + 0.001);
-            tl.to(card, { x: 0, y: popY, rotation: 0, scale: 1, duration: 0.24, ease: 'power2.inOut' }, seg);
-            tl.to(flips[i], { rotationY: 180, duration: 0.22, ease: 'power2.inOut' }, seg + 0.05);
-            tl.to(flips[i], { rotationY: 0, duration: 0.2, ease: 'power2.inOut' }, seg + 0.76);
-            tl.to(card, { ...fan[i], scale: fanScale, duration: 0.23, ease: 'power2.inOut' }, seg + 0.77);
+            tl.to(card, { x: cx, y: popY, rotation: 0, scale: 1, duration: 0.24, ease: 'power2.inOut' }, seg);
+            // flip open: edge-on at 90°, swap sides, finish from -90°
+            tl.to(flips[i], { rotationY: 90, duration: 0.1, ease: 'power1.in' }, seg + 0.08);
+            tl.set(backs[i], { autoAlpha: 0 }, seg + 0.18);
+            tl.set(faces[i], { autoAlpha: 1 }, seg + 0.18);
+            tl.set(flips[i], { rotationY: -90 }, seg + 0.18);
+            tl.to(flips[i], { rotationY: 0, duration: 0.1, ease: 'power1.out' }, seg + 0.181);
+            // flip shut on the way back
+            tl.to(flips[i], { rotationY: -90, duration: 0.09, ease: 'power1.in' }, seg + 0.76);
+            tl.set(faces[i], { autoAlpha: 0 }, seg + 0.85);
+            tl.set(backs[i], { autoAlpha: 1 }, seg + 0.85);
+            tl.set(flips[i], { rotationY: 90 }, seg + 0.85);
+            tl.to(flips[i], { rotationY: 0, duration: 0.09, ease: 'power1.out' }, seg + 0.851);
+            tl.to(card, { ...fan[i], scale: fanScale, duration: 0.22, ease: 'power2.inOut' }, seg + 0.78);
             tl.set(card, { zIndex: i + 1 }, seg + 0.999);
         });
 
@@ -124,6 +151,8 @@
         if (tl) tl.kill();
         gsap.set(cards, { clearProps: 'all' });
         gsap.set(flips, { clearProps: 'all' });
+        gsap.set(backs, { clearProps: 'all' });
+        gsap.set(faces, { clearProps: 'all' });
         if (hint) gsap.set(hint, { clearProps: 'all' });
     }
 

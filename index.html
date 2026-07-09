@@ -407,9 +407,11 @@
     </footer>
 
     <!-- GSAP + ScrollTrigger (vendored, v3.13.0) -->
+    <!-- script.js first: it builds the side nav that animations.js
+         measures when laying out the stage -->
     <script src="gsap.min.js"></script>
     <script src="ScrollTrigger.min.js"></script>
-    <script src="animations.js"></script>
     <script src="script.js"></script>
+    <script src="animations.js"></script>
 </body>
 </html>
