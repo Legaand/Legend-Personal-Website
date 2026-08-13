@@ -1,55 +1,58 @@
 /* ==========================================================================
-   The Legend Show — the ribbon spread
-   A deck of Bicycle-back cards fanned on a dark stage; scroll pops each
-   card out of the spread and flips it to reveal an act of the portfolio.
-   Default CSS = static fallback (no JS / reduced motion). animations.js
-   adds body.live for the pinned, scroll-driven fan.
+   The Legend Show — dark, high-contrast portfolio.
+   A dense scrolling page with a fixed card rail as its section nav.
+   Default CSS renders everything fully visible and the rail legible —
+   animations.js only adds motion on top, so no-JS and reduced-motion
+   visitors get the complete, navigable page.
    ========================================================================== */
 
 :root {
-    /* stage */
-    --stage: #0F0F23;
-    --stage-deep: #0A0A18;
-    --felt: #12321F;
-    /* inks & accents */
-    --gold: #FBBF24;
-    --gold-deep: #CA8A04;
-    --crimson: #DC2626;
-    --crimson-ink: #B91C1C;   /* red that passes 4.5:1 on the card face */
-    --back-red: #C31432;      /* bicycle-back red panel */
+    /* ground — near-black, not navy. Contrast is the whole point. */
+    --bg:        #08080A;
+    --surf-1:    #0F0F14;
+    --surf-2:    #16161D;
+    --line:      rgba(255, 255, 255, 0.09);
+    --line-2:    rgba(255, 255, 255, 0.18);
+    /* ink */
+    --text:      #F4F4F6;
+    --text-2:    #9A9AA6;
+    --text-3:    #6A6A76;
+    /* accents */
+    --gold:      #FBBF24;
+    --gold-deep: #B4830B;
+    --crimson:   #F43F5E;
+    --crimson-deep: #9F1239;
+    --back-red:  #C31432;   /* bicycle back panel */
     --card-face: #FAF7F0;
-    --ink: #1F2430;
-    --ink-soft: #555E6E;
-    --text: #E8E6E3;
-    --text-dim: #A8A5A0;
+    --ink:       #14141A;
+    --ink-soft:  #55555F;
+    --crimson-ink: #B91C1C; /* red that passes 4.5:1 on the light card face */
     /* type */
     --font-display: 'Abril Fatface', Georgia, serif;
     --font-hud: 'Chakra Petch', 'Courier New', monospace;
     --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* rhythm */
+    --wrap: 1180px;
+    --rail-w: clamp(212px, 16vw, 288px);
+    --rail-card: clamp(126px, 11.5vw, 178px);
+    --gut: clamp(1.25rem, 4vw, 3rem);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* NOTE: no `scroll-behavior: smooth` here — it conflicts with GSAP
-   ScrollTrigger's scrub/snap (programmatic scrolls animate and snap
-   fires mid-flight). Smooth nav jumps are tweened in animations.js. */
+html { scroll-behavior: smooth; }
 
 body {
     font-family: var(--font-body);
+    background: var(--bg);
     color: var(--text);
-    /* layered stage: warm key light above, felt-green table glow below,
-       deep blue-black falloff — fixed so the pinned show doesn't slide it */
-    background:
-        radial-gradient(90% 62% at 50% 112%, rgba(16, 58, 36, 0.5), transparent 64%),
-        radial-gradient(64% 48% at 50% 34%, rgba(84, 62, 160, 0.13), transparent 70%),
-        radial-gradient(140% 100% at 50% 0%, rgba(251, 191, 36, 0.05), transparent 55%),
-        linear-gradient(180deg, #0C0C1A 0%, #131329 52%, #08080F 100%);
-    background-attachment: fixed;
     min-height: 100vh;
+    overflow-x: hidden;
     touch-action: manipulation;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* film grain over everything — kills gradient banding, adds texture */
+/* film grain — kills gradient banding, adds texture */
 body::before {
     content: '';
     position: fixed;
@@ -57,608 +60,1025 @@ body::before {
     z-index: 2000;
     pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    opacity: 0.045;
+    opacity: 0.05;
     mix-blend-mode: overlay;
 }
 
-button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+/* The UA rule for [hidden] is display:none at the lowest specificity, so any
+   component rule that sets `display` silently defeats it. Card faces stay
+   hidden via the attribute until they are turned over, so make it
+   authoritative or they leak through before the flip. */
+[hidden] { display: none !important; }
 
-:focus-visible {
-    outline: 2px solid var(--gold);
-    outline-offset: 3px;
+img { max-width: 100%; display: block; }
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+a { color: inherit; }
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 2px; }
+::selection { background: var(--gold); color: var(--bg); }
+
+.skip-link {
+    position: fixed;
+    top: -100px; left: 12px;
+    z-index: 1200;
+    padding: 12px 18px;
+    background: var(--gold);
+    color: var(--bg);
+    font-family: var(--font-hud);
+    font-weight: 700;
+    text-decoration: none;
+    transition: top 0.2s;
+}
+.skip-link:focus { top: 12px; }
+
+.wrap {
+    width: 100%;
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding-inline: var(--gut);
 }
 
-::selection { background: var(--gold-deep); color: var(--stage); }
+.suit-icon { width: 1em; height: 1em; fill: currentColor; flex: none; }
+.suit-icon.crimson { color: var(--crimson); }
 
 /* ================= scroll progress ================= */
 
 #progress {
     position: fixed;
     top: 0; left: 0;
-    width: 100%; height: 3px;
-    background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--crimson), var(--gold));
     transform: scaleX(0);
     transform-origin: left;
-    z-index: 1000;
+    z-index: 1100;
     pointer-events: none;
 }
 
+/* ================= dust ================= */
+
+#dust {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.4;
+}
+#dust::before, #dust::after {
+    content: '';
+    position: absolute;
+    inset: -20% 0;
+    background-repeat: repeat;
+    background-image:
+        radial-gradient(1.6px 1.6px at 12% 18%, rgba(251, 191, 36, 0.5), transparent),
+        radial-gradient(1.2px 1.2px at 68% 42%, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1.8px 1.8px at 34% 71%, rgba(251, 191, 36, 0.34), transparent),
+        radial-gradient(1.1px 1.1px at 87% 12%, rgba(255, 255, 255, 0.45), transparent),
+        radial-gradient(1.5px 1.5px at 52% 88%, rgba(251, 191, 36, 0.3), transparent);
+    background-size: 340px 340px;
+    animation: dust-a 34s linear infinite;
+}
+#dust::after { background-size: 520px 520px; opacity: 0.6; animation: dust-b 58s linear infinite; }
+@keyframes dust-a { from { transform: translate3d(0,0,0); } to { transform: translate3d(-60px,-340px,0); } }
+@keyframes dust-b { from { transform: translate3d(0,0,0); } to { transform: translate3d(90px,-520px,0); } }
+
 /* ================= nav ================= */
 
-#top-nav {
+#nav {
     position: fixed;
-    top: 10px; left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 2px;
-    padding: 4px 8px;
-    max-width: calc(100vw - 16px);
-    overflow-x: auto;
-    scrollbar-width: none;
-    background: rgba(15, 15, 35, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(251, 191, 36, 0.18);
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    top: 0; left: 0; right: 0;
     z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.85rem var(--gut);
+    background: rgba(8, 8, 10, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s, background 0.3s;
 }
-#top-nav::-webkit-scrollbar { display: none; }
+#nav.stuck { border-bottom-color: var(--line); }
 
-.nav-btn {
+.nav-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    color: var(--text);
+}
+.nav-mark .suit-icon { font-size: 0.72em; }
+
+.nav-links {
+    display: flex;
+    gap: 0.35rem;
+    margin-left: auto;
+}
+.nav-links a {
+    position: relative;
     font-family: var(--font-hud);
     font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--text-dim);
-    padding: 0 0.9em;
-    min-height: 40px;
-    white-space: nowrap;
-    transition: color 0.2s;
+    color: var(--text-2);
+    text-decoration: none;
+    padding: 0.75em 0.9em;
+    transition: color 0.22s;
 }
-.nav-btn:hover, .nav-btn:focus-visible { color: var(--gold); }
-
-/* ================= side nav (wide screens) =================
-   Built by script.js from the cards: act headers + one item per card.
-   Replaces the top tabs on wide viewports. */
-
-#side-nav {
-    position: fixed;
-    left: 18px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 200px;
-    max-height: calc(100vh - 90px);
-    overflow-y: auto;
-    scrollbar-width: none;
-    z-index: 900;
-    /* glass panel: the centred fan may pass behind it */
-    padding: 18px 16px;
-    background: linear-gradient(180deg, rgba(10, 10, 22, 0.78), rgba(10, 10, 22, 0.62));
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(251, 191, 36, 0.14);
-    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    left: 0.9em; right: 0.9em; bottom: 0.5em;
+    height: 1px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
-#side-nav::-webkit-scrollbar { display: none; }
+.nav-links a:hover, .nav-links a:focus-visible { color: var(--text); }
+.nav-links a:hover::after, .nav-links a:focus-visible::after, .nav-links a.active::after { transform: scaleX(1); }
+.nav-links a.active { color: var(--gold); }
 
-.side-act-btn {
-    display: block;
+.nav-cta {
     font-family: var(--font-hud);
-    font-size: 0.6rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.24em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--gold-deep);
-    text-align: left;
-    padding: 2px 0;
-    transition: color 0.2s;
+    text-decoration: none;
+    color: var(--bg);
+    background: var(--gold);
+    padding: 0.85em 1.3em;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    transition: background 0.22s, transform 0.14s;
 }
-.side-act-btn:hover, .side-act-btn:focus-visible { color: var(--gold); }
-.side-act.active .side-act-btn { color: var(--gold); }
+.nav-cta:hover { background: #FFD35C; }
+.nav-cta:active { transform: scale(0.97); }
 
-.side-list {
-    list-style: none;
-    margin-top: 4px;
-    border-left: 1px solid rgba(251, 191, 36, 0.22);
+/* Below the rail's breakpoint the text links ARE the section nav, so they
+   must survive all the way down to the smallest screen — they used to be
+   hidden under 860px, which combined with the rail taking over above 1100px
+   left phones with no way to reach a section at all. Let them scroll instead. */
+@media (max-width: 1099px) {
+    .nav-links {
+        min-width: 0;              /* required for a flex child to shrink */
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+}
+@media (max-width: 640px) {
+    #nav { gap: 0.6rem; padding-inline: 1rem; }
+    .nav-mark { font-size: 1rem; }
+    .nav-links a { font-size: 0.62rem; padding: 0.75em 0.5em; letter-spacing: 0.1em; }
+    .nav-cta { font-size: 0.62rem; padding: 0.8em 0.9em; letter-spacing: 0.1em; }
 }
 
-.side-item {
-    display: block;
-    width: 100%;
-    text-align: left;
+/* ================= buttons ================= */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
     font-family: var(--font-hud);
-    font-size: 0.64rem;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    line-height: 1.35;
-    color: var(--text-dim);
-    padding: 4px 0 4px 12px;
-    margin-left: -1px;
-    border-left: 2px solid transparent;
-    transition: color 0.2s, border-color 0.2s;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--text);
+    border: 1px solid var(--line-2);
+    padding: 0.95em 1.5em;
+    min-height: 44px;
+    clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+    transition: background 0.22s, color 0.22s, border-color 0.22s, transform 0.14s;
 }
-.side-item:hover, .side-item:focus-visible { color: var(--card-face); }
-.side-item.active {
-    color: var(--gold);
-    border-left-color: var(--gold);
-}
-
-/* wide screens: side nav in, top tabs out */
-@media (min-width: 1101px) {
-    #top-nav { display: none; }
-}
-@media (max-width: 1100px) {
-    #side-nav { display: none; }
-}
+.btn:hover, .btn:focus-visible { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn:active { transform: scale(0.97); }
+.btn-solid { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+.btn-solid:hover, .btn-solid:focus-visible { background: #FFD35C; color: var(--bg); border-color: #FFD35C; }
+.arrow { display: inline-block; transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+.btn:hover .arrow, .btn:focus-visible .arrow { transform: translate(3px, -3px); }
 
 /* ================= hero ================= */
 
 .hero {
+    position: relative;
+    z-index: 1;
     min-height: 100vh;
     min-height: 100dvh;
-    display: grid;
-    place-items: center;
-    position: relative;
-    overflow: hidden;
-    text-align: center;
-    padding: 5rem 1.5rem 3rem;
-}
-
-.spotlight-cone {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 55% 48% at 50% 42%, rgba(251, 191, 36, 0.10), transparent 70%);
-    pointer-events: none;
-}
-
-.hero-content { position: relative; }
-
-.showbill {
-    font-family: var(--font-hud);
-    font-size: clamp(0.62rem, 1.6vw, 0.8rem);
-    font-weight: 600;
-    letter-spacing: 0.34em;
-    color: var(--gold);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.9em;
-    margin-bottom: 1.4rem;
-}
-
-.suit-icon {
-    width: 1em; height: 1em;
-    fill: currentColor;
-    flex: none;
-}
-.showbill .suit-icon { color: var(--card-face); }
-.showbill .suit-icon.crimson { color: var(--crimson); }
-
-.hero h1 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-size: clamp(3.2rem, 12vw, 7.5rem);
-    line-height: 1.02;
-    background: linear-gradient(180deg, #FFFDF5 18%, #F3E1B2 58%, var(--gold) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    filter: drop-shadow(0 0 30px rgba(251, 191, 36, 0.22));
-}
-
-.player-line {
-    font-family: var(--font-hud);
-    font-size: clamp(0.7rem, 1.8vw, 0.9rem);
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    color: var(--text-dim);
-    margin-top: 1.3rem;
-}
-
-.deal-line {
-    font-family: var(--font-hud);
-    font-size: 0.75rem;
-    letter-spacing: 0.14em;
-    color: var(--gold-deep);
-    margin-top: 2.6rem;
-}
-
-.scroll-cue {
-    margin-top: 1rem;
-    color: var(--gold);
-    font-size: 1.1rem;
-    min-width: 44px;
-    min-height: 44px;
-    animation: cue-bob 1.6s ease-in-out infinite;
-}
-@keyframes cue-bob {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(7px); }
-}
-@media (prefers-reduced-motion: reduce) {
-    .scroll-cue { animation: none; }
-}
-
-/* ==========================================================================
-   THE SPREAD — static fallback layout (grid of face-up cards)
-   ========================================================================== */
-
-#show { position: relative; }
-
-.spread {
-    list-style: none;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
-    gap: 2rem;
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem 5rem;
-}
-
-.spread-card {
-    container-type: inline-size;
-    position: relative;
-}
-
-.flip { height: 100%; }
-
-.side.back { display: none; }
-.back svg { display: block; width: 100%; height: 100%; }
-
-/* ---------- the card face (light, dark ink — inverted vs the stage) ------ */
-
-.side.face {
-    background: var(--card-face);
-    color: var(--ink);
-    border-radius: max(10px, 3.2cqi);
-    padding: 11cqi 10cqi;
-    height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 2.6cqi;
-    overflow-y: auto;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 18px 50px rgba(0, 0, 0, 0.5);
-}
-
-/* corner indices */
-.ci {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6cqi;
-    font-family: var(--font-hud);
-    font-weight: 700;
-    font-size: 5.4cqi;
-    line-height: 1;
-    pointer-events: none;
-}
-.ci .suit-icon { width: 4.4cqi; height: 4.4cqi; }
-.ci.top { top: 3.4cqi; left: 3.8cqi; }
-.ci.bottom { bottom: 3.4cqi; right: 3.8cqi; transform: rotate(180deg); }
-.ci.red { color: var(--crimson-ink); }
-.ci.black { color: var(--ink); }
-.joker-ci { font-size: 3.4cqi; letter-spacing: 0.05em; line-height: 1.25; }
-
-.face-act {
-    font-family: var(--font-hud);
-    font-size: 2.9cqi;
-    font-weight: 700;
-    letter-spacing: 0.3em;
-    color: var(--gold-deep);
-    margin: 0 auto;
-}
-
-.side.face h3 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-size: 7cqi;
-    line-height: 1.1;
-    color: var(--ink);
-}
-
-.face-meta {
-    font-family: var(--font-hud);
-    font-size: 3cqi;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--crimson-ink);
-    border: 1px solid currentColor;
-    padding: 1.2cqi 2.4cqi;
-    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-}
-
-.face-sub {
-    font-size: 3.4cqi;
-    font-weight: 600;
-    color: var(--ink);
-}
-
-.face-label {
-    font-family: var(--font-hud);
-    font-size: 2.7cqi;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    margin-top: 1cqi;
-}
-
-.side.face ul {
-    padding-left: 4.4cqi;
-    display: grid;
-    gap: 1.8cqi;
-}
-.side.face li {
-    font-size: 3.3cqi;
-    line-height: 1.5;
-    color: var(--ink);
-}
-.side.face li::marker { color: var(--crimson-ink); }
-
-.face-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.6cqi;
-}
-.tag {
-    font-family: var(--font-hud);
-    font-size: 2.6cqi;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--ink-soft);
-    border: 1px solid rgba(31, 36, 48, 0.35);
-    padding: 0.9cqi 2.2cqi;
-    white-space: nowrap;
-}
-
-.face-link {
-    font-family: var(--font-hud);
-    font-size: 3cqi;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: var(--ink);
-    text-decoration: none;
-    border: 1.5px solid var(--ink);
-    padding: 2.2cqi 4cqi;
-    margin-top: auto;
-    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-    transition: background 0.2s, color 0.2s;
-}
-.face-link:hover, .face-link:focus-visible {
-    background: var(--ink);
-    color: var(--card-face);
-}
-
-.big-pip {
-    width: 26cqi; height: 26cqi;
-    margin: auto;
-    opacity: 0.9;
-}
-.big-pip.red { fill: var(--crimson-ink); }
-
-/* publications */
-.publication { display: grid; gap: 1.8cqi; }
-.publication + .publication { margin-top: 2cqi; }
-.cite {
-    font-size: 3.1cqi;
-    line-height: 1.5;
-    color: var(--ink);
-}
-.cite em { color: var(--ink); }
-
-/* skills rows */
-.skill-row {
-    display: grid;
-    grid-template-columns: 24cqi 1fr;
-    gap: 2.4cqi;
-    align-items: start;
-    width: 100%;
-}
-.skill-cat {
-    font-family: var(--font-hud);
-    font-size: 2.7cqi;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--crimson-ink);
-    padding-top: 1cqi;
-}
-
-/* joker / contact */
-.side.face.joker {
-    align-items: center;
-    text-align: center;
     justify-content: center;
-}
-.joker-mark {
-    width: 15cqi; height: 15cqi;
-    fill: var(--crimson-ink);
-}
-.contact-links {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2.6cqi;
-    margin-top: 2cqi;
-}
-.hud-btn {
-    font-family: var(--font-hud);
-    font-size: 3cqi;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink);
-    text-decoration: none;
-    border: 2px solid var(--ink);
-    padding: 2.6cqi 5cqi;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
-    transition: background 0.2s, color 0.2s;
-}
-.hud-btn:hover, .hud-btn:focus-visible {
-    background: var(--ink);
-    color: var(--card-face);
-}
-.fin {
-    font-family: var(--font-hud);
-    font-size: 2.8cqi;
-    letter-spacing: 0.4em;
-    color: var(--ink-soft);
-    margin-top: 3cqi;
-}
-
-/* HUD + hint hidden in static mode */
-.hud, .show-hint { display: none; }
-
-/* ==========================================================================
-   LIVE MODE — the pinned stage (added by animations.js when motion is OK)
-   ========================================================================== */
-
-body.live #show {
-    height: 100vh;
-    height: 100dvh;
     overflow: hidden;
+    padding: clamp(6rem, 14vh, 9rem) var(--gut) 0;
     isolation: isolate;
 }
 
-/* spotlight pool + felt glow behind the cards */
-body.live #show::before {
-    content: '';
+/* the follow-spot: deliberately faint, it should read as air not as a shape */
+.beam {
     position: absolute;
-    inset: 0;
+    top: -12%; left: 50%;
+    width: 78vmax; height: 118%;
+    z-index: -1;
     pointer-events: none;
-    background:
-        radial-gradient(42% 46% at 50% 46%, rgba(251, 191, 36, 0.07), transparent 70%),
-        radial-gradient(75% 42% at 50% 102%, rgba(16, 58, 36, 0.45), transparent 68%);
+    clip-path: polygon(46% 0, 54% 0, 88% 100%, 12% 100%);
+    background: linear-gradient(180deg,
+        rgba(251, 191, 36, 0.06) 0%,
+        rgba(251, 191, 36, 0.025) 40%,
+        rgba(251, 191, 36, 0.008) 74%,
+        transparent 100%);
+    filter: blur(26px);
+    /* clip-path applies AFTER filter, so blur can't soften the cone's edges —
+       this mask runs after clip-path and feathers them away. */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 74%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 74%, transparent 100%);
+    transform: translateX(-50%);
+    transform-origin: 50% 0;
+    animation: beam-sway 13s ease-in-out infinite;
+}
+@keyframes beam-sway {
+    0%, 100% { transform: translateX(-50%) rotate(-2.2deg); }
+    50%      { transform: translateX(-50%) rotate(2.2deg); }
 }
 
-/* soft vignette over the fan edges (under the popped card, z 200) */
-body.live #show::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 60;
-    background: radial-gradient(115% 115% at 50% 44%, transparent 56%, rgba(4, 4, 10, 0.5) 100%);
-}
-
-body.live .spread {
-    display: block;
-    max-width: none;
-    padding: 0;
-    margin: 0;
-    height: 100%;
+.hero-inner {
     position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: var(--wrap);
+    margin: 0 auto;
 }
 
-body.live .spread-card {
-    position: absolute;
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+    font-family: var(--font-hud);
+    font-size: clamp(0.66rem, 1.5vw, 0.78rem);
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+}
+
+.title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(3.6rem, 14vw, 12rem);
+    line-height: 0.88;
+    letter-spacing: -0.025em;
+    margin: 0.22em 0 0;
+    color: var(--text);
+}
+/* masked line-rise reveal: animations.js wraps the words in these spans */
+.title .line {
+    display: block;
+    overflow: hidden;
+    /* Abril's descenders fall well outside the 0.88 line-height box, and this
+       block is the reveal mask — too little room here shaves the g and y. */
+    padding-bottom: 0.24em;
+    margin-bottom: -0.24em;
+}
+.title .word { display: inline-block; will-change: transform; }
+
+.lede {
+    max-width: 34ch;
+    margin-top: 1.6rem;
+    font-size: clamp(1.05rem, 2.1vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--text-2);
+}
+.lede strong { color: var(--text); font-weight: 600; }
+
+.hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.8rem;
+}
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55em;
+    font-family: var(--font-hud);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    border: 1px solid var(--line);
+    padding: 0.55em 0.95em;
+    border-radius: 100px;
+}
+.pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.16);
+}
+
+.hero-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.2rem; }
+
+/* ==========================================================================
+   THE RAIL — the section nav, and the only place cards do real work.
+   Default (below) is a plain legible column of face-up cards with labels:
+   that is what no-JS and reduced-motion visitors get, and it navigates.
+   animations.js adds `.dealt`, which tucks them into an overlapping stack
+   and turns only the current section's card face-up.
+   ========================================================================== */
+
+#rail {
+    display: none;                     /* wide screens only — see the query below */
+    position: fixed;
+    left: 0;
     top: 50%;
-    left: 50%;
-    width: min(440px, 92vw, 56vh);
-    aspect-ratio: 5 / 7;
-    cursor: pointer;
-    will-change: transform;
+    transform: translateY(-50%);
+    z-index: 850;
+    width: var(--rail-w);
+    padding: 12px 0 12px 20px;
 }
 
-/* decorative filler backs (created by animations.js, live mode only) */
-.spread-card.filler { display: none; }
-body.live .spread-card.filler {
-    display: block;
-    cursor: default;
-    pointer-events: none;
-}
-
-/* The flip is a 2D edge-flip (scaleX through 0, swap sides) driven by
-   animations.js — deliberately no 3D transforms or preserve-3d: any 3D
-   card plane makes Chromium paint the cards above fixed UI (the side
-   nav) regardless of z-index. All-2D transforms composite correctly. */
-body.live .flip {
+/* ---- progress spine: how far through the page you are ------------------ */
+.rail-spine {
     position: absolute;
-    inset: 0;
+    left: 6px; top: 12px; bottom: 12px;
+    width: 2px;
+    background: var(--line);
 }
-
-body.live .side {
+.rail-spine i {
     position: absolute;
-    inset: 0;
-    border-radius: max(10px, 3.2cqi);
+    left: 0; top: 0;
+    width: 100%;
+    height: 0;                          /* script.js sets this from scroll */
+    background: linear-gradient(180deg, var(--crimson), var(--gold));
 }
+#rail:not(.dealt) .rail-spine { display: none; }
 
-body.live .side.back {
-    display: block;
-    filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.6));
-}
-
-body.live .side.face {
-    height: auto;
-    opacity: 0; /* animations.js toggles sides with autoAlpha */
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.35) inset,
-        0 0 0 1px rgba(202, 138, 4, 0.22),
-        0 30px 80px rgba(0, 0, 0, 0.65);
-}
-
-/* HUD */
-body.live .hud {
+.rail-card {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 1.2em;
+    gap: 0.9rem;
+    width: auto;
+    text-decoration: none;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rail-card + .rail-card { margin-top: 10px; }
+
+.rc-back, .rc-face {
+    display: block;
+    /* small undealt so every card plus its label fits a short viewport; the
+       dealt stack overlaps and can afford to be much bigger */
+    width: 56px;
+    aspect-ratio: 5 / 7;
+    flex: none;
+}
+.rc-back svg { display: block; width: 100%; height: 100%; }
+.rc-back { display: none; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.65)); }
+.rc-face .rcard-face { width: 100%; }
+
+.rail-num {
+    display: none;
+    font-family: var(--font-hud);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+    transition: color 0.25s;
+}
+
+.rail-label {
+    font-family: var(--font-hud);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    white-space: nowrap;
+    transition: color 0.25s;
+}
+.rail-card:hover .rail-label,
+.rail-card:focus-visible .rail-label { color: var(--text); }
+.rail-card.active .rail-label { color: var(--gold); }
+.rail-card:hover, .rail-card:focus-visible { transform: translateX(6px); }
+
+/* ---- dealt: a fanned deck, the current card drawn out and turned over ---
+   Cards sit fully on screen rather than tucked off the left edge — the rail
+   has reserved width now, so there is room to show them properly. */
+#rail.dealt { padding-left: 44px; }
+#rail.dealt .rail-card {
+    width: var(--rail-card);
+    margin-top: 0;
+    transition: none;                  /* GSAP owns the transform now */
+}
+/* leaves ~45% of each card showing, so seven still fit a short viewport */
+#rail.dealt .rail-card + .rail-card { margin-top: calc(var(--rail-card) * -0.95); }
+#rail.dealt .rc-back,
+#rail.dealt .rc-face { width: var(--rail-card); }
+#rail.dealt .rc-back { display: block; }
+#rail.dealt .rc-face {
     position: absolute;
-    top: 66px;
+    inset: 0 auto 0 0;
+    /* face-down is the dealt default. GSAP's autoAlpha writes inline styles
+       that override this the moment a card becomes current, so the only
+       thing this guards is a flash of face-up cards before it runs. */
+    opacity: 0;
+    visibility: hidden;
+}
+#rail.dealt .rail-num {
+    display: block;
+    font-size: 0.64rem;
+    position: absolute;      /* left/top pinned to the rail by animations.js */
+    transform: translateY(-50%);
+}
+#rail.dealt .rail-num.on { color: var(--gold); }
+
+/* A real heart card: the pips are laid out in the traditional arrangement for
+   the rank, and the lower half is printed upside down exactly as a real card
+   does. Scoped to #rail so the project art, which shares .rcard-face's
+   surface, is untouched. */
+#rail .pips {
+    position: absolute;
+    inset: 13% 20%;
+}
+#rail .pip {
+    position: absolute;
+    width: 23%;
+    height: 23%;
+    fill: var(--crimson-ink);
+    transform: translate(-50%, -50%);
+}
+#rail .pip.flip { transform: translate(-50%, -50%) rotate(180deg); }
+#rail .pip.big { width: 46%; height: 46%; }
+
+#rail.dealt .rail-label {
+    position: absolute;
     left: 50%;
+    top: calc(100% + 10px);
     transform: translateX(-50%);
+    z-index: 2;
+    white-space: nowrap;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    opacity: 0;
+    pointer-events: none;
+}
+#rail.dealt .rail-card:hover,
+#rail.dealt .rail-card:focus-visible { transform: none; }
+
+/* the drawn card should read as lit, not just moved */
+#rail.dealt .rail-card.active .rcard-face {
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.55) inset,
+        0 28px 64px rgba(0, 0, 0, 0.75),
+        0 0 38px rgba(251, 191, 36, 0.28);
+}
+#rail.dealt .rail-card.active .rc-back { filter: none; }
+
+@media (min-width: 1100px) {
+    #rail { display: block; }
+    #nav .nav-links { display: none; }  /* the rail is the section nav now */
+    /* Reserve the rail's width rather than letting it float over the page.
+       Without this the rail sits on top of the text from 1100-1280px, where
+       the centred 1180px column leaves almost no gutter. Fixed-position
+       elements ignore body padding, so #nav is offset separately. */
+    body { padding-left: var(--rail-w); }
+    #nav { padding-left: calc(var(--rail-w) + var(--gut)); }
+}
+
+/* ---- cards falling across the whole screen ----------------------------
+   The layer sits BEHIND the content and is entirely inert. That is what lets
+   it cover the full width: cards pass behind the text rather than over it, so
+   they can never hurt legibility or intercept a click meant for a link.
+   Three depth tiers (size + blur + opacity) give it real parallax. */
+#drift {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+.dcard {
+    position: absolute;
+    top: 0; left: 0;
+    aspect-ratio: 5 / 7;
+    pointer-events: none;
+    will-change: transform;
+}
+.dcard svg { display: block; width: 100%; height: 100%; }
+.dcard.d-far  { width: 86px;  opacity: 0.045; filter: blur(2.6px); }
+.dcard.d-mid  { width: 140px; opacity: 0.07;  filter: blur(1.2px); }
+.dcard.d-near { width: 205px; opacity: 0.09;  filter: blur(0.4px); }
+
+/* the field is ambient wallpaper, so it can run at any width */
+
+.cue {
+    position: absolute;
+    bottom: 1.6rem; left: 50%;
+    z-index: 4;
+    transform: translateX(-50%);
+    display: inline-grid;
+    place-items: center;
+    width: 46px; height: 46px;
+    color: var(--gold);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 50%;
+    transition: border-color 0.25s, background 0.25s;
+    animation: cue-bob 1.9s ease-in-out infinite;
+}
+.cue svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; }
+.cue:hover, .cue:focus-visible { border-color: var(--gold); background: rgba(251, 191, 36, 0.12); }
+@keyframes cue-bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ================= sections ================= */
+
+.sec {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(5rem, 11vw, 9rem);
+    border-top: 1px solid var(--line);
+}
+
+.kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    font-family: var(--font-hud);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+}
+.kicker.sm { font-size: 0.66rem; color: var(--text-2); }
+
+.sec-head { margin-bottom: clamp(2.5rem, 6vw, 4.5rem); }
+/* scoped to the section, not to .sec-head — several sections (the trick, the
+   magic blurb, contact) lay their heading out without that wrapper */
+.sec h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.2rem, 6.4vw, 4.6rem);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    margin-top: 0.35em;
+}
+.sec-sub {
+    max-width: 52ch;
+    margin-top: 1.1rem;
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: var(--text-2);
+}
+
+/* ================= the count ================= */
+
+.sec-count { border-top: none; }
+
+.stats {
+    list-style: none;
+    display: grid;
+    /* explicit tracks, not auto-fit: there are exactly six stats, and auto-fit
+       lands on five-plus-one at desktop widths, which leaves a dead cell */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin-top: 2.6rem;
+    background: var(--line);
+    border: 1px solid var(--line);
+}
+.stat {
+    background: var(--bg);
+    padding: clamp(1.5rem, 3.5vw, 2.4rem) clamp(1.2rem, 3vw, 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: background 0.3s;
+}
+.stat:hover { background: var(--surf-1); }
+.stat-n {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 5.4vw, 4rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--gold);
+    /* tabular figures stop the count-up from jittering the layout */
+    font-variant-numeric: tabular-nums;
+}
+.stat-l {
+    font-family: var(--font-hud);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    line-height: 1.4;
+}
+
+@media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 460px) { .stats { grid-template-columns: 1fr; } }
+
+/* ==========================================================================
+   CARD STOCK — a real face, shared by the trick reveal and the project art.
+   Cream card on a near-black table: the whole point of the palette.
+   ========================================================================== */
+
+.rcard-face,
+.proj-shot {
+    position: relative;
+    background: var(--card-face);
+    border-radius: 8px;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.5) inset,
+        0 24px 60px rgba(0, 0, 0, 0.6);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+.rcard-face { aspect-ratio: 5 / 7; width: 100%; }
+
+/* corner indices */
+.rf-ci, .shot-rank {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.12em;
+    font-family: var(--font-hud);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+}
+.rf-ci.red, .shot-rank.red { color: var(--crimson-ink); }
+.rf-ci { font-size: 1.15rem; }
+.rf-ci .suit-icon { width: 0.8em; height: 0.8em; }
+.rf-ci.top { top: 9px; left: 11px; }
+.rf-ci.bottom { bottom: 9px; right: 11px; transform: rotate(180deg); }
+
+/* the index scales with the card it sits on */
+.rcard .rf-ci { font-size: 0.78rem; }
+.dcard .rf-ci { font-size: 0.55rem; }
+.dcard .rf-ci.top { top: 5px; left: 6px; }
+.dcard .rf-ci.bottom { bottom: 5px; right: 6px; }
+
+.rcard-face[data-suit="red"] .rf-ci { color: var(--crimson-ink); }
+
+/* ================= the hand (projects) ================= */
+
+.hand { list-style: none; display: grid; gap: clamp(3rem, 7vw, 6rem); }
+
+.proj {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    align-items: center;
+}
+/* alternate the side the card sits on so the page has a rhythm */
+.proj:nth-child(even) .proj-shot { order: 2; }
+
+/* The project art IS a playing card — cream stock on the dark table, dealt at
+   a slight angle. It reads as deliberate rather than as an empty placeholder,
+   and an <img> dropped inside simply covers it. */
+.proj-shot {
+    aspect-ratio: 5 / 7;
+    width: min(100%, 320px);
+    justify-self: center;
+    transform: rotate(-2.5deg);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.45s ease;
+}
+.proj:nth-child(even) .proj-shot { transform: rotate(2.5deg); }
+.proj:hover .proj-shot,
+.proj:nth-child(even):hover .proj-shot {
+    transform: rotate(0deg) translateY(-10px);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.5) inset,
+        0 34px 70px rgba(0, 0, 0, 0.7);
+}
+.proj-shot img { width: 100%; height: 100%; object-fit: cover; grid-area: 1 / 1; }
+
+.shot-mark {
+    width: 46%; height: 46%;
+    fill: var(--ink);
+    grid-area: 1 / 1;
+}
+.shot-mark.red { fill: var(--crimson-ink); }
+
+.shot-rank { font-size: 1.25rem; }
+.shot-rank .suit-icon { width: 0.8em; height: 0.8em; }
+.shot-rank.top, .shot-rank:not(.bottom) { top: 10px; left: 13px; }
+.shot-rank.bottom { bottom: 10px; right: 13px; transform: rotate(180deg); }
+
+.proj-tags-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.1rem;
+}
+.badge {
+    font-family: var(--font-hud);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    border: 1px solid var(--line-2);
+    padding: 0.45em 0.8em;
+}
+.badge-live { color: var(--gold); border-color: rgba(251, 191, 36, 0.4); }
+.when {
+    font-family: var(--font-hud);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+}
+
+.proj-name {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+}
+.proj-real {
+    font-family: var(--font-hud);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-top: 0.5rem;
+}
+.proj-specs {
+    list-style: none;
+    display: grid;
+    gap: 0.8rem;
+    margin: 1.4rem 0;
+}
+.proj-specs li {
+    position: relative;
+    padding-left: 1.4em;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-2);
+}
+.proj-specs li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0.62em;
+    width: 6px; height: 6px;
+    background: var(--crimson);
+    transform: rotate(45deg);
+}
+.proj-specs strong { color: var(--text); font-weight: 600; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tag {
+    font-family: var(--font-hud);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-2);
+    border: 1px solid var(--line);
+    padding: 0.42em 0.8em;
+    white-space: nowrap;
+    transition: border-color 0.22s, color 0.22s;
+}
+.tag:hover { border-color: var(--line-2); color: var(--text); }
+.proj-body .btn { margin-top: 1.6rem; }
+
+@media (max-width: 780px) {
+    .proj { grid-template-columns: 1fr; }
+    .proj:nth-child(even) .proj-shot { order: 0; }
+}
+
+/* ================= track record ================= */
+
+.track { list-style: none; display: grid; }
+
+.tr {
+    display: grid;
+    grid-template-columns: clamp(3.5rem, 8vw, 7rem) minmax(0, 1fr);
+    gap: clamp(1rem, 3vw, 2.5rem);
+    padding-block: clamp(1.8rem, 4vw, 2.8rem);
+    border-top: 1px solid var(--line);
+    transition: background 0.3s;
+}
+.tr:last-child { border-bottom: 1px solid var(--line); }
+.tr:hover { background: var(--surf-1); }
+
+.tr-n {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    line-height: 1;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+}
+.tr-when {
     font-family: var(--font-hud);
     font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.28em;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
     color: var(--gold);
-    white-space: nowrap;
-    z-index: 5;
-    opacity: 0;
-    transition: opacity 0.35s;
+    margin-bottom: 0.5rem;
 }
-body.live .hud.on { opacity: 1; }
-#hud-count { color: var(--text-dim); letter-spacing: 0.18em; }
-
-body.live .show-hint {
-    display: block;
-    position: absolute;
-    bottom: 14px;
-    left: 50%;
-    transform: translateX(-50%);
+.tr-body h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.3rem, 3vw, 1.9rem);
+    line-height: 1.2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6em;
+}
+.tr-org {
     font-family: var(--font-hud);
-    font-size: 0.68rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.tr-note, .tr-body ul { margin-top: 0.85rem; }
+.tr-note { font-size: 0.98rem; line-height: 1.6; color: var(--text-2); max-width: 68ch; }
+.tr-body ul { list-style: none; display: grid; gap: 0.55rem; max-width: 68ch; }
+.tr-body ul li {
+    position: relative;
+    padding-left: 1.3em;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: var(--text-2);
+}
+.tr-body ul li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0.62em;
+    width: 5px; height: 5px;
+    background: var(--text-3);
+    transform: rotate(45deg);
+}
+
+/* publications */
+.papers { margin-top: clamp(3rem, 7vw, 5rem); }
+.paper-list {
+    list-style: none;
+    display: grid;
+    gap: 1.6rem;
+    margin-top: 1.6rem;
+}
+.paper-list li {
+    padding: clamp(1.2rem, 3vw, 1.8rem);
+    background: var(--surf-1);
+    border: 1px solid var(--line);
+}
+.cite { font-size: 0.98rem; line-height: 1.6; color: var(--text); }
+.cite strong { color: var(--gold); }
+.doi {
+    font-family: var(--font-hud);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+    margin-top: 0.5rem;
+}
+
+/* ================= the stack ================= */
+
+.stack { display: grid; }
+.stack-row {
+    display: grid;
+    grid-template-columns: clamp(7rem, 16vw, 12rem) minmax(0, 1fr);
+    gap: clamp(1rem, 3vw, 2rem);
+    align-items: start;
+    padding-block: 1.4rem;
+    border-top: 1px solid var(--line);
+}
+.stack-row:last-child { border-bottom: 1px solid var(--line); }
+.stack dt {
+    font-family: var(--font-hud);
+    font-size: 0.74rem;
+    font-weight: 700;
     letter-spacing: 0.2em;
-    color: var(--text-dim);
-    white-space: nowrap;
-    z-index: 5;
+    text-transform: uppercase;
+    color: var(--crimson);
+    padding-top: 0.35em;
+}
+
+@media (max-width: 560px) {
+    .stack-row, .tr { grid-template-columns: 1fr; gap: 0.75rem; }
+}
+
+/* ================= contact ================= */
+
+.sec-contact { background: var(--surf-1); }
+.contact-wrap {
+    display: grid;
+    grid-template-columns: clamp(150px, 20vw, 230px) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: center;
+}
+
+.joker-card {
+    position: relative;
+    aspect-ratio: 5 / 7;
+    background: var(--card-face);
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+    transform: rotate(-5deg);
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sec-contact:hover .joker-card { transform: rotate(-1deg) translateY(-8px); }
+.joker-mark { width: 42%; height: 42%; fill: var(--crimson-ink); }
+.joker-ci {
+    position: absolute;
+    font-family: var(--font-hud);
+    font-weight: 700;
+    font-size: 0.62rem;
+    line-height: 1.25;
+    letter-spacing: 0.05em;
+    text-align: center;
+    color: var(--crimson-ink);
+}
+.joker-ci.top { top: 10px; left: 11px; }
+.joker-ci.bottom { bottom: 10px; right: 11px; transform: rotate(180deg); }
+
+.contact-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+
+@media (max-width: 700px) {
+    .contact-wrap { grid-template-columns: 1fr; justify-items: start; }
+    .joker-card { width: 150px; }
 }
 
 /* ================= footer ================= */
 
 footer {
-    text-align: center;
-    padding: 2.4rem 1.5rem 3rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 2.4rem var(--gut) 3rem;
+    max-width: var(--wrap);
+    margin: 0 auto;
+    border-top: 1px solid var(--line);
 }
 footer p {
     font-family: var(--font-hud);
     font-size: 0.72rem;
     letter-spacing: 0.2em;
-    color: var(--text-dim);
+    text-transform: uppercase;
+    color: var(--text-3);
 }
 
-/* ================= small screens ================= */
+/* ================= cursor ring ================= */
 
-@media (max-width: 600px) {
-    #top-nav { top: 6px; }
-    .nav-btn { font-size: 0.66rem; padding: 0 0.7em; }
-    body.live .hud { top: 58px; font-size: 0.62rem; letter-spacing: 0.18em; }
+#cursor-ring {
+    position: fixed;
+    top: 0; left: 0;
+    width: 32px; height: 32px;
+    margin: -16px 0 0 -16px;
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1500;
+    opacity: 0;
+    will-change: transform;
+    transition: opacity 0.3s, width 0.25s, height 0.25s, margin 0.25s,
+                border-color 0.25s, background 0.25s;
+}
+#cursor-ring.on { opacity: 1; }
+#cursor-ring.hot {
+    width: 54px; height: 54px;
+    margin: -27px 0 0 -27px;
+    border-color: var(--gold);
+    background: rgba(251, 191, 36, 0.08);
+}
+@media (pointer: coarse), (hover: none) { #cursor-ring { display: none; } }
+
+/* ==========================================================================
+   REDUCED MOTION — kill every ambient animation. The page above is already
+   fully legible without motion, so nothing needs a special static layout.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .cue, .beam, #dust::before, #dust::after { animation: none !important; }
+    #dust, .beam, #cursor-ring { display: none; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; }
 }

@@ -12,7 +12,8 @@
       "Bash(xxd /Users/thelegend/Code/legendyang.github.io/CLAUDE.md)",
       "Bash(git -C /Users/thelegend/Code/legendyang.github.io diff style.css)",
       "Bash(git -C /Users/thelegend/Code/legendyang.github.io diff --cached style.css)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:shaurya-portfolio.vercel.app)"
     ]
   }
 }

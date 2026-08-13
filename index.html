@@ -148,309 +148,461 @@
             <use href="#bb-side" transform="translate(208 175)"/>
         </symbol>
     </svg>
-
     <!-- page scroll progress -->
     <div id="progress" aria-hidden="true"></div>
 
+    <!-- drifting dust motes, two parallax layers (pure CSS) -->
+    <div id="dust" aria-hidden="true"></div>
+
+    <!-- ambient cards drifting down the side margins (built by animations.js) -->
+    <div id="drift" aria-hidden="true"></div>
+
+    <a class="skip-link" href="#work">Skip to work</a>
+
     <!-- ================= NAV ================= -->
-    <nav id="top-nav" aria-label="Sections">
-        <button class="nav-btn" data-jump="about">Education</button>
-        <button class="nav-btn" data-jump="projects">Projects</button>
-        <button class="nav-btn" data-jump="experience">Experience</button>
-        <button class="nav-btn" data-jump="research">Research</button>
-        <button class="nav-btn" data-jump="skills">Skills</button>
-        <button class="nav-btn" data-jump="contact">Contact</button>
+    <nav id="nav" aria-label="Primary">
+        <a class="nav-mark" href="#top">
+            <span>LY</span>
+            <svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-heart"/></svg>
+        </a>
+        <div class="nav-links">
+            <a href="#count">Numbers</a>
+            <a href="#work">Work</a>
+            <a href="#track">Experience</a>
+            <a href="#stack">Skills</a>
+        </div>
+        <a class="nav-cta" href="#contact">Get in touch</a>
+    </nav>
+
+    <!-- Section rail. Real anchors, and the cards are face-up by default:
+         animations.js adds .dealt to tuck them into a stack and turn only
+         the current one over, so no-JS and reduced-motion get a plain,
+         legible nav instead of a pile of face-down cards. -->
+    <nav id="rail" aria-label="Sections">
+            <span class="rail-spine" aria-hidden="true"><i></i></span>
+            <a class="rail-card" href="#top" data-section="top">
+                <span class="rail-num" aria-hidden="true">01</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <span class="rf-ci top red">A<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip big" style="left:50%;top:50%"><use href="#suit-heart"/></svg>
+                        </span>
+                        <span class="rf-ci bottom red">A<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Home</span>
+            </a>
+            <a class="rail-card" href="#count" data-section="count">
+                <span class="rail-num" aria-hidden="true">02</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <span class="rf-ci top red">2<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip" style="left:50%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip flip" style="left:50%;top:82%"><use href="#suit-heart"/></svg>
+                        </span>
+                        <span class="rf-ci bottom red">2<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Numbers</span>
+            </a>
+            <a class="rail-card" href="#work" data-section="work">
+                <span class="rail-num" aria-hidden="true">03</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <span class="rf-ci top red">3<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip" style="left:50%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:50%;top:50%"><use href="#suit-heart"/></svg>
+                            <svg class="pip flip" style="left:50%;top:82%"><use href="#suit-heart"/></svg>
+                        </span>
+                        <span class="rf-ci bottom red">3<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Work</span>
+            </a>
+            <a class="rail-card" href="#track" data-section="track">
+                <span class="rail-num" aria-hidden="true">04</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <span class="rf-ci top red">4<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip" style="left:27%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip flip" style="left:27%;top:82%"><use href="#suit-heart"/></svg>
+                            <svg class="pip flip" style="left:73%;top:82%"><use href="#suit-heart"/></svg>
+                        </span>
+                        <span class="rf-ci bottom red">4<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Experience</span>
+            </a>
+            <a class="rail-card" href="#stack" data-section="stack">
+                <span class="rail-num" aria-hidden="true">05</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <span class="rf-ci top red">5<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip" style="left:27%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:50%;top:50%"><use href="#suit-heart"/></svg>
+                            <svg class="pip flip" style="left:27%;top:82%"><use href="#suit-heart"/></svg>
+                            <svg class="pip flip" style="left:73%;top:82%"><use href="#suit-heart"/></svg>
+                        </span>
+                        <span class="rf-ci bottom red">5<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Skills</span>
+            </a>
+            <a class="rail-card" href="#contact" data-section="contact">
+                <span class="rail-num" aria-hidden="true">06</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <span class="rf-ci top red">6<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip" style="left:27%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:27%;top:50%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:50%"><use href="#suit-heart"/></svg>
+                            <svg class="pip flip" style="left:27%;top:82%"><use href="#suit-heart"/></svg>
+                            <svg class="pip flip" style="left:73%;top:82%"><use href="#suit-heart"/></svg>
+                        </span>
+                        <span class="rf-ci bottom red">6<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Contact</span>
+            </a>
     </nav>
 
     <!-- ================= HERO ================= -->
-    <header class="hero">
-        <div class="spotlight-cone" aria-hidden="true"></div>
-        <div class="hero-content">
-            <p class="showbill">
-                <svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-heart"/></svg>
-                A ONE-MAN SHOW OF CODE &amp; MAGIC
+    <header class="hero" id="top">
+        <div class="beam" aria-hidden="true"></div>
+
+        <div class="hero-inner">
+            <p class="eyebrow">
                 <svg class="suit-icon" aria-hidden="true"><use href="#suit-spade"/></svg>
+                Mathematics of Computation · UCLA ’29
             </p>
-            <h1>Legend Yang</h1>
-            <p class="player-line">MATHEMATICS OF COMPUTATION @ UCLA</p>
-            <p class="deal-line">thirteen cards on the table — scroll to spread the deck</p>
-            <button class="scroll-cue" data-jump="about" aria-label="Scroll to the spread">▼</button>
+            <h1 class="title">Legend Yang</h1>
+            <p class="lede">
+                I scrape the data nobody wants to clean, model it, and ship it as
+                something people actually use. Then I go practice card magic.
+            </p>
+            <div class="hero-meta">
+                <span class="pill"><i class="dot" aria-hidden="true"></i>Singapore → Los Angeles</span>
+                <span class="pill">4.0 GPA</span>
+                <span class="pill">2 published papers</span>
+            </div>
+            <div class="hero-cta">
+                <a class="btn btn-solid" href="#work">See my work</a>
+                <a class="btn" href="mailto:thelegendy@g.ucla.edu">Email me</a>
+            </div>
         </div>
+
+
+        <a class="cue" href="#count" aria-label="Scroll to the numbers">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8l7 7 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
     </header>
 
-    <!-- ================= THE SPREAD ================= -->
-    <section id="show" aria-label="The card spread — portfolio">
-        <div class="hud" aria-hidden="true">
-            <span id="hud-act"></span>
-            <span id="hud-count"></span>
+    <main>
+
+    <!-- ================= THE COUNT ================= -->
+    <section id="count" class="sec sec-count">
+        <div class="wrap">
+            <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-diamond"/></svg>By the numbers</p>
+            <ul class="stats">
+                <li class="stat">
+                    <span class="stat-n" data-to="4" data-decimals="1">4.0</span>
+                    <span class="stat-l">GPA at UCLA</span>
+                </li>
+                <li class="stat">
+                    <span class="stat-n" data-to="300" data-suffix="+">300+</span>
+                    <span class="stat-l">Professors indexed</span>
+                </li>
+                <li class="stat">
+                    <span class="stat-n" data-to="33000" data-suffix="+">33,000+</span>
+                    <span class="stat-l">Students the tools serve</span>
+                </li>
+                <li class="stat">
+                    <span class="stat-n" data-to="8000" data-suffix="+">8,000+</span>
+                    <span class="stat-l">Course entries analysed</span>
+                </li>
+                <li class="stat">
+                    <span class="stat-n" data-to="10000" data-suffix="+">10,000+</span>
+                    <span class="stat-l">Survey responses studied</span>
+                </li>
+                <li class="stat">
+                    <span class="stat-n" data-to="2">2</span>
+                    <span class="stat-l">Published papers</span>
+                </li>
+            </ul>
         </div>
+    </section>
 
-        <ol class="spread">
 
-            <!-- 1 · A♦ · UCLA -->
-            <li class="spread-card" id="about" data-section="about" data-act="EDUCATION" aria-label="Education: UCLA">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top red" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <span class="ci bottom red" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <p class="face-act">EDUCATION</p>
-                        <h3>UCLA</h3>
-                        <p class="face-meta">2025 – 2029</p>
-                        <p class="face-sub">B.S. Mathematics of Computation · GPA 4.0/4.0</p>
-                        <p class="face-label">Relevant Coursework</p>
+    <!-- ================= THE HAND (projects) ================= -->
+    <section id="work" class="sec">
+        <div class="wrap">
+            <header class="sec-head">
+                <p class="kicker"><svg class="suit-icon" aria-hidden="true"><use href="#suit-spade"/></svg>Selected work</p>
+                <h2>Things I’ve built.</h2>
+                <p class="sec-sub">Each one shipped end to end. More on GitHub.</p>
+            </header>
+
+            <ol class="hand">
+
+                <!-- A♠ -->
+                <li class="proj" data-suit="black">
+                    <div class="proj-shot">
+                        <span class="shot-rank" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
+                        <!-- Drop a screenshot in here and it replaces the placeholder:
+                             <img src="shots/research-matching.png" alt="Research Interest Matching interface"> -->
+                        <svg class="shot-mark" aria-hidden="true"><use href="#suit-spade"/></svg>
+                        <span class="shot-rank bottom" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
+                    </div>
+                    <div class="proj-body">
+                        <p class="proj-tags-top">
+                            <span class="badge badge-live">Shipped</span>
+                            <span class="when">Nov – Dec 2025</span>
+                        </p>
+                        <h3 class="proj-name">Research Interest Matching</h3>
+                        <ul class="proj-specs">
+                            <li>Scraped, cleaned and embedded research profiles for <strong>300+ professors</strong> across multiple departments and universities.</li>
+                            <li>Similarity search surfaces aligned researchers in <strong>seconds instead of hours</strong>.</li>
+                        </ul>
+                        <div class="tags"><span class="tag">Python</span><span class="tag">NLP</span><span class="tag">Web scraping</span></div>
+                        <a href="https://faculty-project-nextjs.vercel.app" target="_blank" rel="noopener" class="btn">Visit <span class="arrow" aria-hidden="true">↗</span></a>
+                    </div>
+                </li>
+
+                <!-- K♦ -->
+                <li class="proj" data-suit="red">
+                    <div class="proj-shot">
+                        <span class="shot-rank red" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
+                        <svg class="shot-mark red" aria-hidden="true"><use href="#suit-diamond"/></svg>
+                        <span class="shot-rank red bottom" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
+                    </div>
+                    <div class="proj-body">
+                        <p class="proj-tags-top">
+                            <span class="badge badge-live">Live</span>
+                            <span class="when">Sept 2025 – now</span>
+                        </p>
+                        <h3 class="proj-name">Double Major Optimization</h3>
+                        <ul class="proj-specs">
+                            <li>Pipeline scrapes UCLA’s <strong>200+ program requirements</strong>, structuring unorganised text with the Gemini API into courses and dependencies.</li>
+                            <li>Analysed <strong>8,000+ course entries</strong> to find the most efficient double-major paths for <strong>33,000+ undergraduates</strong>.</li>
+                        </ul>
+                        <div class="tags"><span class="tag">Python</span><span class="tag">Gemini API</span><span class="tag">Optimization</span></div>
+                        <a href="https://doublemajor.vercel.app/" target="_blank" rel="noopener" class="btn">Visit <span class="arrow" aria-hidden="true">↗</span></a>
+                    </div>
+                </li>
+
+                <!-- Q♥ -->
+                <li class="proj" data-suit="red">
+                    <div class="proj-shot">
+                        <span class="shot-rank red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <svg class="shot-mark red" aria-hidden="true"><use href="#suit-heart"/></svg>
+                        <span class="shot-rank red bottom" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </div>
+                    <div class="proj-body">
+                        <p class="proj-tags-top">
+                            <span class="badge">Project lead · Datares</span>
+                            <span class="when">Oct – Dec 2025</span>
+                        </p>
+                        <h3 class="proj-name">Factors Influencing Envy</h3>
+                        <ul class="proj-specs">
+                            <li>Sourced <strong>10,000+ survey responses</strong> to study what drives envy — personality traits and internet usage patterns.</li>
+                            <li>Cleaned and analysed in pandas, producing <strong>5+ visualisations</strong> that surfaced the strongest factors.</li>
+                        </ul>
+                        <div class="tags"><span class="tag">Python</span><span class="tag">Pandas</span><span class="tag">Seaborn</span><span class="tag">EDA</span></div>
+                        <a href="https://ucladatares.medium.com/understanding-envy-in-a-competitive-modern-world-toward-greater-self-awareness-776ae1c9557b" target="_blank" rel="noopener" class="btn">Read the write-up <span class="arrow" aria-hidden="true">↗</span></a>
+                    </div>
+                </li>
+
+                <!-- J♣ -->
+                <li class="proj" data-suit="black">
+                    <div class="proj-shot">
+                        <span class="shot-rank" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-club"/></svg></span>
+                        <svg class="shot-mark" aria-hidden="true"><use href="#suit-club"/></svg>
+                        <span class="shot-rank bottom" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-club"/></svg></span>
+                    </div>
+                    <div class="proj-body">
+                        <p class="proj-tags-top">
+                            <span class="badge badge-live">Live</span>
+                            <span class="when">Oct 2025 – now</span>
+                        </p>
+                        <h3 class="proj-name">Card Magic Learning Platform</h3>
+                        <ul class="proj-specs">
+                            <li>Full-stack training platform for the card magic community — <strong>7+ modular components</strong> for structured skill progression and collaborative practice.</li>
+                            <li>Backend database and auth tracking progress, session history and personalised paths.</li>
+                        </ul>
+                        <div class="tags"><span class="tag">Next.js</span><span class="tag">Vercel</span><span class="tag">Git</span></div>
+                        <a href="https://www.skill-tree.live/" target="_blank" rel="noopener" class="btn">Visit <span class="arrow" aria-hidden="true">↗</span></a>
+                    </div>
+                </li>
+
+            </ol>
+        </div>
+    </section>
+
+    <!-- ================= TRACK RECORD ================= -->
+    <section id="track" class="sec">
+        <div class="wrap">
+            <header class="sec-head">
+                <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-heart"/></svg>Experience</p>
+                <h2>Where I’ve worked and studied.</h2>
+            </header>
+
+            <ol class="track">
+                <li class="tr">
+                    <span class="tr-n" aria-hidden="true">01</span>
+                    <div class="tr-body">
+                        <p class="tr-when">2025 – 2029</p>
+                        <h3>B.S. Mathematics of Computation<span class="tr-org">UCLA</span></h3>
+                        <p class="tr-note">GPA 4.0/4.0. Coursework in programming (C++) and Data, Justice &amp; Society — the ethics of AI and data systems.</p>
+                    </div>
+                </li>
+                <li class="tr">
+                    <span class="tr-n" aria-hidden="true">02</span>
+                    <div class="tr-body">
+                        <p class="tr-when">June – Aug 2025</p>
+                        <h3>Student Researcher<span class="tr-org">National University of Singapore</span></h3>
+                        <p class="tr-note">Supervised by Liang Zhenkai, Associate Professor of Computer Science.</p>
                         <ul>
-                            <li>Introduction to Programming (C++)</li>
-                            <li>Data, Justice, and Society — ethical implications of AI and data systems</li>
+                            <li>AI agents for stock price prediction and decision-making in Python.</li>
+                            <li>Built and deployed a web platform for benchmarking agents against code implementations.</li>
                         </ul>
                     </div>
-                </div>
-            </li>
-
-            <!-- 2 · K♦ · Singapore American School -->
-            <li class="spread-card" data-section="about" data-act="EDUCATION" aria-label="Education: Singapore American School">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top red" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <span class="ci bottom red" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <p class="face-act">EDUCATION</p>
-                        <h3>Singapore American School</h3>
-                        <p class="face-meta">2021 – 2025</p>
-                        <p class="face-sub">High School Diploma · GPA 4.41</p>
-                        <svg class="big-pip red" aria-hidden="true"><use href="#suit-diamond"/></svg>
-                    </div>
-                </div>
-            </li>
-
-            <!-- 3 · A♠ · Research Interest Matching -->
-            <li class="spread-card" id="projects" data-section="projects" data-act="PROJECTS" aria-label="Projects: Research Interest Matching">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top black" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <span class="ci bottom black" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <p class="face-act">PROJECTS</p>
-                        <h3>Research Interest Matching</h3>
-                        <p class="face-meta">Nov. 2025 – Dec. 2025</p>
+                </li>
+                <li class="tr">
+                    <span class="tr-n" aria-hidden="true">03</span>
+                    <div class="tr-body">
+                        <p class="tr-when">Aug – Dec 2024</p>
+                        <h3>Engineer Intern<span class="tr-org">Futurum Academy, Singapore</span></h3>
                         <ul>
-                            <li>Engineered a Python text-processing pipeline that scraped and processed research profiles for 300+ professors across multiple departments and universities — cleaning, segmenting, and embedding unstructured text.</li>
-                            <li>Implemented similarity search that finds professors with aligned research interests in seconds instead of hours.</li>
-                        </ul>
-                        <div class="face-tags"><span class="tag">Python</span><span class="tag">NLP</span><span class="tag">Web Scraping</span></div>
-                        <a href="https://faculty-project-nextjs.vercel.app" target="_blank" rel="noopener" class="face-link">View Project ↗</a>
-                    </div>
-                </div>
-            </li>
-
-            <!-- 4 · K♠ · Double Major Optimization -->
-            <li class="spread-card" data-section="projects" data-act="PROJECTS" aria-label="Projects: Double Major Completion Optimization">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top black" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <span class="ci bottom black" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <p class="face-act">PROJECTS</p>
-                        <h3>Double Major Completion Optimization</h3>
-                        <p class="face-meta">Sept. 2025 – Current</p>
-                        <ul>
-                            <li>Built a Python pipeline that scrapes UCLA's 200+ academic program requirements, structuring unorganized text with the Gemini API to identify required courses and dependencies.</li>
-                            <li>Normalized and analyzed 8,000+ course entries to find the most efficient double-major paths — course load, overlap, and feasibility for 33,000+ UCLA undergraduates.</li>
-                        </ul>
-                        <div class="face-tags"><span class="tag">Python</span><span class="tag">Gemini API</span><span class="tag">Optimization</span></div>
-                        <a href="https://doublemajor.vercel.app/" target="_blank" rel="noopener" class="face-link">View Project ↗</a>
-                    </div>
-                </div>
-            </li>
-
-            <!-- 5 · Q♥ · Envy Data Analysis -->
-            <li class="spread-card" data-section="projects" data-act="PROJECTS" aria-label="Projects: Data analysis of factors influencing envy">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
-                        <span class="ci bottom red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
-                        <p class="face-act">PROJECTS</p>
-                        <h3>Factors Influencing Envy</h3>
-                        <p class="face-meta">Oct. 2025 – Dec. 2025 · Project Lead at Datares</p>
-                        <ul>
-                            <li>Sourced public datasets of 10,000+ survey responses to study factors contributing to envy, including personality traits and internet usage patterns.</li>
-                            <li>Cleaned and analyzed data with Python and pandas, producing 5+ visualizations to surface the key factors influencing envy.</li>
-                        </ul>
-                        <div class="face-tags"><span class="tag">Python</span><span class="tag">Pandas</span><span class="tag">Seaborn</span><span class="tag">EDA</span></div>
-                        <a href="https://ucladatares.medium.com/understanding-envy-in-a-competitive-modern-world-toward-greater-self-awareness-776ae1c9557b" target="_blank" rel="noopener" class="face-link">Read Article ↗</a>
-                    </div>
-                </div>
-            </li>
-
-            <!-- 6 · J♣ · Card Magic Learning Site -->
-            <li class="spread-card" data-section="projects" data-act="PROJECTS" aria-label="Projects: Interactive learning website for card magic">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top black" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <span class="ci bottom black" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <p class="face-act">PROJECTS</p>
-                        <h3>Interactive Learning Website for Card Magic</h3>
-                        <p class="face-meta">Oct. 2025 – Current</p>
-                        <ul>
-                            <li>Engineered a full-stack interactive learning site for the card magic community — 7+ modular training components for structured skill progression and collaborative practice.</li>
-                            <li>Implemented backend database integration and user authentication to track progress, session history, and personalized paths.</li>
-                        </ul>
-                        <div class="face-tags"><span class="tag">Vercel</span><span class="tag">Git</span></div>
-                        <a href="https://www.skill-tree.live/" target="_blank" rel="noopener" class="face-link">View Project ↗</a>
-                    </div>
-                </div>
-            </li>
-
-            <!-- 7 · K♣ · Futurum Academy -->
-            <li class="spread-card" id="experience" data-section="experience" data-act="EXPERIENCE" aria-label="Experience: Engineer Intern at Futurum Academy">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top black" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <span class="ci bottom black" aria-hidden="true">K<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <p class="face-act">EXPERIENCE</p>
-                        <h3>Engineer Intern</h3>
-                        <p class="face-meta">Aug 2024 – Dec 2024 · Futurum Academy Singapore</p>
-                        <ul>
-                            <li>Mentored two competitive VEX V5 Robotics teams at a leading coding &amp; robotics academy.</li>
-                            <li>Improved student performance through guidance in mechanical design and efficient autonomous path planning.</li>
-                            <li>Facilitated computer-assisted design to build hands-on engineering and programming proficiency.</li>
+                            <li>Mentored two competitive VEX V5 robotics teams at a leading coding and robotics academy.</li>
+                            <li>Coached mechanical design and autonomous path planning; ran CAD sessions for hands-on engineering practice.</li>
                         </ul>
                     </div>
-                </div>
-            </li>
-
-            <!-- 8 · Q♣ · iOS App -->
-            <li class="spread-card" data-section="experience" data-act="EXPERIENCE" aria-label="Experience: Self-employed iOS developer">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top black" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <span class="ci bottom black" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-club"/></svg></span>
-                        <p class="face-act">EXPERIENCE</p>
-                        <h3>Self-Employed Developer</h3>
-                        <p class="face-meta">Sept 2023 – Mar 2024 · Mobile App Development</p>
+                </li>
+                <li class="tr">
+                    <span class="tr-n" aria-hidden="true">04</span>
+                    <div class="tr-body">
+                        <p class="tr-when">Sept 2023 – Mar 2024</p>
+                        <h3>Self-Employed iOS Developer<span class="tr-org">Independent</span></h3>
                         <ul>
-                            <li>Designed a task and learning management iOS app in Swift — note-taking, photo organization, and progress tracking.</li>
-                            <li>Integrated data persistence to help users monitor learning habits and stay motivated, with a user-centered design.</li>
-                        </ul>
-                        <div class="face-tags"><span class="tag">Swift</span><span class="tag">iOS</span></div>
-                    </div>
-                </div>
-            </li>
-
-            <!-- 9 · J♦ · SaMi -->
-            <li class="spread-card" data-section="experience" data-act="EXPERIENCE" aria-label="Experience: Director of Singapore chapter, San Antonio Math Include">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top red" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <span class="ci bottom red" aria-hidden="true">J<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <p class="face-act">EXPERIENCE</p>
-                        <h3>Director of Singapore Chapter</h3>
-                        <p class="face-meta">May – Sept 2023 · San Antonio Math Include</p>
-                        <ul>
-                            <li>Launched SaMi's first Singapore chapter, expanding free STEM tutoring across Singapore and China.</li>
-                            <li>Recruited and coordinated 7 volunteer tutors teaching 30+ students across 7 STEM disciplines.</li>
-                            <li>Partnered 5 schools and 3 organizations to promote equitable STEM education opportunities.</li>
+                            <li>Shipped a task and learning management app in Swift — note-taking, photo organisation, progress tracking.</li>
+                            <li>Added data persistence so users could monitor learning habits over time.</li>
                         </ul>
                     </div>
-                </div>
-            </li>
-
-            <!-- 10 · A♥ · NUS Research -->
-            <li class="spread-card" id="research" data-section="research" data-act="RESEARCH" aria-label="Research: Student researcher at National University of Singapore">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top red" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
-                        <span class="ci bottom red" aria-hidden="true">A<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
-                        <p class="face-act">RESEARCH</p>
-                        <h3>Student Researcher</h3>
-                        <p class="face-meta">June – Aug 2025 · National University of Singapore</p>
-                        <p class="face-sub">Supervised by Liang Zhenkai, Associate Professor of Computer Science</p>
+                </li>
+                <li class="tr">
+                    <span class="tr-n" aria-hidden="true">05</span>
+                    <div class="tr-body">
+                        <p class="tr-when">May – Sept 2023</p>
+                        <h3>Director, Singapore Chapter<span class="tr-org">San Antonio Math Include</span></h3>
                         <ul>
-                            <li>Collaborated on an AI-driven finance research project — AI agents for stock price prediction and decision-making in Python.</li>
-                            <li>Built and deployed a web-based AI agent platform enabling benchmarking against code implementations.</li>
+                            <li>Launched SaMi’s first Singapore chapter, extending free STEM tutoring across Singapore and China.</li>
+                            <li>Recruited 7 volunteer tutors teaching 30+ students across 7 STEM disciplines; partnered 5 schools and 3 organisations.</li>
                         </ul>
                     </div>
-                </div>
-            </li>
-
-            <!-- 11 · Q♦ · Publications -->
-            <li class="spread-card" data-section="research" data-act="RESEARCH" aria-label="Research: Publications">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <span class="ci bottom red" aria-hidden="true">Q<svg class="suit-icon"><use href="#suit-diamond"/></svg></span>
-                        <p class="face-act">RESEARCH</p>
-                        <h3>Publications</h3>
-                        <div class="publication">
-                            <p class="cite">Tang, Y., Li, Z., Yu, J., &amp; <strong>Yang, L.</strong> (2025). <em>A Simple Approach of Chinese Poetry Generation Using Pre-trained LLMs.</em> 106–112. doi:10.1145/3726101.3726121</p>
-                            <ul>
-                                <li>Developed Python scripts for data preprocessing and consistency improvement</li>
-                                <li>Leveraged LLaMA-Factory for model fine-tuning in poetry generation</li>
-                            </ul>
-                        </div>
-                        <div class="publication">
-                            <p class="cite"><strong>Yang, L.</strong> (2024). <em>Resilience enhancement for interdependent power systems by AI-assisted disaster response.</em> Applied and Computational Engineering, 95, 216–229. doi:10.54254/2755-2721/95/20241640</p>
-                        </div>
+                </li>
+                <li class="tr">
+                    <span class="tr-n" aria-hidden="true">06</span>
+                    <div class="tr-body">
+                        <p class="tr-when">2021 – 2025</p>
+                        <h3>High School Diploma<span class="tr-org">Singapore American School</span></h3>
+                        <p class="tr-note">GPA 4.41.</p>
                     </div>
-                </div>
-            </li>
+                </li>
+            </ol>
 
-            <!-- 12 · 10♠ · Skills -->
-            <li class="spread-card" id="skills" data-section="skills" data-act="SKILLS" aria-label="Skills">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face">
-                        <span class="ci top black" aria-hidden="true">10<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <span class="ci bottom black" aria-hidden="true">10<svg class="suit-icon"><use href="#suit-spade"/></svg></span>
-                        <p class="face-act">SKILLS</p>
-                        <h3>Skills</h3>
-                        <div class="skill-row"><span class="skill-cat">Languages</span><span class="face-tags"><span class="tag">Python</span><span class="tag">C++</span><span class="tag">SQL</span><span class="tag">Java</span></span></div>
-                        <div class="skill-row"><span class="skill-cat">Frameworks</span><span class="face-tags"><span class="tag">NumPy</span><span class="tag">Pandas</span><span class="tag">Seaborn</span><span class="tag">BeautifulSoup</span><span class="tag">FastAPI</span><span class="tag">Next.js</span></span></div>
-                        <div class="skill-row"><span class="skill-cat">Databases</span><span class="face-tags"><span class="tag">MySQL</span><span class="tag">SQLAlchemy</span></span></div>
-                        <div class="skill-row"><span class="skill-cat">AI Tools</span><span class="face-tags"><span class="tag">Gemini API</span><span class="tag">Coze</span><span class="tag">LLaMA</span></span></div>
-                        <div class="skill-row"><span class="skill-cat">Dev Tools</span><span class="face-tags"><span class="tag">Git</span><span class="tag">GitHub</span><span class="tag">Vercel</span><span class="tag">Render</span></span></div>
-                    </div>
-                </div>
-            </li>
+            <div class="papers">
+                <p class="kicker sm"><svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-diamond"/></svg>Published</p>
+                <ol class="paper-list">
+                    <li>
+                        <p class="cite">Tang, Y., Li, Z., Yu, J., &amp; <strong>Yang, L.</strong> (2025). <em>A Simple Approach of Chinese Poetry Generation Using Pre-trained LLMs.</em> 106–112.</p>
+                        <p class="doi">doi:10.1145/3726101.3726121</p>
+                        <p class="tr-note">Wrote the preprocessing and consistency tooling; fine-tuned with LLaMA-Factory for poetry generation.</p>
+                    </li>
+                    <li>
+                        <p class="cite"><strong>Yang, L.</strong> (2024). <em>Resilience enhancement for interdependent power systems by AI-assisted disaster response.</em> Applied and Computational Engineering, 95, 216–229.</p>
+                        <p class="doi">doi:10.54254/2755-2721/95/20241640</p>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </section>
 
-            <!-- 13 · JOKER · Contact -->
-            <li class="spread-card" id="contact" data-section="contact" data-act="CONTACT" aria-label="Contact">
-                <div class="flip">
-                    <div class="side back" aria-hidden="true"><svg><use href="#card-back"/></svg></div>
-                    <div class="side face joker">
-                        <span class="ci top red joker-ci" aria-hidden="true">★<br>J<br>O<br>K<br>E<br>R</span>
-                        <span class="ci bottom red joker-ci" aria-hidden="true">★<br>J<br>O<br>K<br>E<br>R</span>
-                        <p class="face-act">CONTACT</p>
-                        <svg class="joker-mark" aria-hidden="true"><use href="#joker-star"/></svg>
-                        <h3>Get in Touch</h3>
-                        <p class="face-sub">Always up for a good conversation — say hello.</p>
-                        <div class="contact-links">
-                            <a href="mailto:thelegendy@g.ucla.edu" class="hud-btn">Email</a>
-                            <a href="https://linkedin.com/in/legendyang" class="hud-btn" target="_blank" rel="noopener">LinkedIn</a>
-                            <a href="https://github.com/Legaand" class="hud-btn" target="_blank" rel="noopener">GitHub</a>
-                        </div>
-                    </div>
+    <!-- ================= THE STACK ================= -->
+    <section id="stack" class="sec">
+        <div class="wrap">
+            <header class="sec-head">
+                <p class="kicker"><svg class="suit-icon" aria-hidden="true"><use href="#suit-club"/></svg>Skills</p>
+                <h2>Tools I work with.</h2>
+            </header>
+            <dl class="stack">
+                <div class="stack-row">
+                    <dt>Languages</dt>
+                    <dd class="tags"><span class="tag">Python</span><span class="tag">C++</span><span class="tag">SQL</span><span class="tag">Java</span><span class="tag">Swift</span></dd>
                 </div>
-            </li>
-        </ol>
+                <div class="stack-row">
+                    <dt>Frameworks</dt>
+                    <dd class="tags"><span class="tag">NumPy</span><span class="tag">Pandas</span><span class="tag">Seaborn</span><span class="tag">BeautifulSoup</span><span class="tag">FastAPI</span><span class="tag">Next.js</span></dd>
+                </div>
+                <div class="stack-row">
+                    <dt>Data</dt>
+                    <dd class="tags"><span class="tag">MySQL</span><span class="tag">SQLAlchemy</span></dd>
+                </div>
+                <div class="stack-row">
+                    <dt>AI</dt>
+                    <dd class="tags"><span class="tag">Gemini API</span><span class="tag">LLaMA-Factory</span><span class="tag">Coze</span></dd>
+                </div>
+                <div class="stack-row">
+                    <dt>Tooling</dt>
+                    <dd class="tags"><span class="tag">Git</span><span class="tag">GitHub</span><span class="tag">Vercel</span><span class="tag">Render</span></dd>
+                </div>
+            </dl>
+        </div>
+    </section>
 
-        <p class="show-hint" aria-hidden="true">keep scrolling — each card reveals more</p>
+    </main>
+
+    <!-- ================= CONTACT (the joker) ================= -->
+    <section id="contact" class="sec sec-contact">
+        <div class="wrap contact-wrap">
+            <div class="joker-card" aria-hidden="true">
+                <span class="ci top red joker-ci">★<br>J<br>O<br>K<br>E<br>R</span>
+                <svg class="joker-mark"><use href="#joker-star"/></svg>
+                <span class="ci bottom red joker-ci">★<br>J<br>O<br>K<br>E<br>R</span>
+            </div>
+            <div class="contact-body">
+                <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#joker-star"/></svg>Contact</p>
+                <h2>Get in touch.</h2>
+                <p class="sec-sub">Open to internships and research work. I read everything that comes in.</p>
+                <div class="contact-links">
+                    <a href="mailto:thelegendy@g.ucla.edu" class="btn btn-solid">thelegendy@g.ucla.edu</a>
+                    <a href="https://linkedin.com/in/legendyang" class="btn" target="_blank" rel="noopener">LinkedIn <span class="arrow" aria-hidden="true">↗</span></a>
+                    <a href="https://github.com/Legaand" class="btn" target="_blank" rel="noopener">GitHub <span class="arrow" aria-hidden="true">↗</span></a>
+                </div>
+            </div>
+        </div>
     </section>
 
     <footer>
-        <p>Legend Yang · thanks for watching the show</p>
+        <p>Legend Yang</p>
+        <p class="fin">Every card here is drawn in SVG — no images</p>
     </footer>
 
     <!-- GSAP + ScrollTrigger (vendored, v3.13.0) -->
-    <!-- script.js first: it builds the side nav that animations.js
-         measures when laying out the stage -->
     <script src="gsap.min.js"></script>
     <script src="ScrollTrigger.min.js"></script>
     <script src="script.js"></script>
