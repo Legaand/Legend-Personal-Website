@@ -240,6 +240,40 @@ a { color: inherit; }
     .nav-cta { font-size: 0.62rem; padding: 0.8em 0.9em; letter-spacing: 0.1em; }
 }
 
+
+/* ---- letter-roll hover -------------------------------------------------
+   Built by script.js. Each character sits twice in a 1em-tall clipped box;
+   hover rolls the pair up so the twin lands in place, staggered per letter. */
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+.roll { display: inline-flex; }
+.roll-i {
+    display: block;
+    overflow: hidden;
+    height: 1em;
+    line-height: 1em;
+}
+.roll-i span {
+    display: block;
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn:hover .roll-i span,
+.btn:focus-visible .roll-i span,
+.nav-links a:hover .roll-i span,
+.nav-links a:focus-visible .roll-i span { transform: translateY(-100%); }
+
+@media (prefers-reduced-motion: reduce) {
+    /* identical glyphs, so snapping is invisible — just don't animate */
+    .roll-i span { transition: none; }
+}
+
 /* ================= buttons ================= */
 
 .btn {
@@ -347,15 +381,6 @@ a { color: inherit; }
     margin-bottom: -0.24em;
 }
 .title .word { display: inline-block; will-change: transform; }
-
-.lede {
-    max-width: 34ch;
-    margin-top: 1.6rem;
-    font-size: clamp(1.05rem, 2.1vw, 1.4rem);
-    line-height: 1.5;
-    color: var(--text-2);
-}
-.lede strong { color: var(--text); font-weight: 600; }
 
 .hero-meta {
     display: flex;
@@ -469,17 +494,25 @@ a { color: inherit; }
 .rail-card.active .rail-label { color: var(--gold); }
 .rail-card:hover, .rail-card:focus-visible { transform: translateX(6px); }
 
-/* ---- dealt: a fanned deck, the current card drawn out and turned over ---
-   Cards sit fully on screen rather than tucked off the left edge — the rail
-   has reserved width now, so there is room to show them properly. */
-#rail.dealt { padding-left: 44px; }
+/* ---- dealt: a wheel whose hub is off-screen to the left -----------------
+   Cards are pinned to the rail's vertical centre and placed by animations.js
+   on a large-radius arc, so the run curves away and off the left edge. The
+   wheel turns as you scroll, bringing the current card round to the front. */
+#rail.dealt {
+    top: 0;
+    height: 100vh;
+    transform: none;
+    padding: 0;
+    overflow: hidden;          /* the wheel genuinely runs past the edge */
+}
 #rail.dealt .rail-card {
+    position: absolute;
+    top: 50%;
+    left: 46px;
     width: var(--rail-card);
     margin-top: 0;
-    transition: none;                  /* GSAP owns the transform now */
+    transition: none;          /* GSAP owns the transform now */
 }
-/* leaves ~45% of each card showing, so seven still fit a short viewport */
-#rail.dealt .rail-card + .rail-card { margin-top: calc(var(--rail-card) * -0.95); }
 #rail.dealt .rc-back,
 #rail.dealt .rc-face { width: var(--rail-card); }
 #rail.dealt .rc-back { display: block; }
@@ -494,16 +527,22 @@ a { color: inherit; }
 }
 #rail.dealt .rail-num {
     display: block;
+    position: absolute;        /* y set by animations.js, riding its card */
+    top: 50%;
+    left: 20px;
     font-size: 0.64rem;
-    position: absolute;      /* left/top pinned to the rail by animations.js */
-    transform: translateY(-50%);
 }
 #rail.dealt .rail-num.on { color: var(--gold); }
+#rail.dealt .rail-spine { left: 6px; top: 8%; bottom: 8%; }
 
 /* A real heart card: the pips are laid out in the traditional arrangement for
-   the rank, and the lower half is printed upside down exactly as a real card
-   does. Scoped to #rail so the project art, which shares .rcard-face's
-   surface, is untouched. */
+   each rank. The lower half is deliberately NOT printed upside down as a real
+   deck would — this heart glyph rotated 180° is indistinguishable from a
+   spade, so the convention actively misreads the suit. Scoped to #rail so the
+   project art, which shares .rcard-face's surface, is untouched. */
+/* Same reason the pips stay upright: a rotated bottom index turns the 6 into
+   a 9 and its heart into a spade, so the card contradicts itself. */
+#rail .rf-ci.bottom { transform: none; }
 #rail .pips {
     position: absolute;
     inset: 13% 20%;
@@ -515,8 +554,33 @@ a { color: inherit; }
     fill: var(--crimson-ink);
     transform: translate(-50%, -50%);
 }
-#rail .pip.flip { transform: translate(-50%, -50%) rotate(180deg); }
 #rail .pip.big { width: 46%; height: 46%; }
+
+#rail.dealt .rail-label {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 10px);
+    transform: translateX(-50%);
+    z-index: 2;
+    white-space: nowrap;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    opacity: 0;
+    pointer-events: none;
+}
+#rail.dealt .rail-card:hover,
+#rail.dealt .rail-card:focus-visible { transform: none; }
+
+/* the drawn card should read as lit, not just moved */
+#rail.dealt .rail-card.active .rcard-face {
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.55) inset,
+        0 28px 64px rgba(0, 0, 0, 0.75),
+        0 0 38px rgba(251, 191, 36, 0.28);
+}
+#rail.dealt .rail-card.active .rc-back { filter: none; }
 
 #rail.dealt .rail-label {
     position: absolute;
@@ -546,13 +610,20 @@ a { color: inherit; }
 
 @media (min-width: 1100px) {
     #rail { display: block; }
-    #nav .nav-links { display: none; }  /* the rail is the section nav now */
+    /* The top bar goes entirely: the rail is the navigation here, and the
+       LY mark is duplicated by the rail's Home card. It is kept BELOW this
+       breakpoint because the rail is hidden there and removing both would
+       leave narrow screens with no navigation at all. */
+    #nav { display: none; }
     /* Reserve the rail's width rather than letting it float over the page.
        Without this the rail sits on top of the text from 1100-1280px, where
        the centred 1180px column leaves almost no gutter. Fixed-position
        elements ignore body padding, so #nav is offset separately. */
     body { padding-left: var(--rail-w); }
-    #nav { padding-left: calc(var(--rail-w) + var(--gut)); }
+    /* The rail's reserved width pushes the centred column right of the real
+       viewport centre. Balancing part of it back brings the page closer to
+       centre without narrowing the content as much as full symmetry would. */
+    body { padding-right: calc(var(--rail-w) * 0.6); }
 }
 
 /* ---- cards falling across the whole screen ----------------------------
@@ -694,8 +765,7 @@ a { color: inherit; }
    Cream card on a near-black table: the whole point of the palette.
    ========================================================================== */
 
-.rcard-face,
-.proj-shot {
+.rcard-face {
     position: relative;
     background: var(--card-face);
     border-radius: 8px;
@@ -726,11 +796,6 @@ a { color: inherit; }
 .rf-ci.top { top: 9px; left: 11px; }
 .rf-ci.bottom { bottom: 9px; right: 11px; transform: rotate(180deg); }
 
-/* the index scales with the card it sits on */
-.rcard .rf-ci { font-size: 0.78rem; }
-.dcard .rf-ci { font-size: 0.55rem; }
-.dcard .rf-ci.top { top: 5px; left: 6px; }
-.dcard .rf-ci.bottom { bottom: 5px; right: 6px; }
 
 .rcard-face[data-suit="red"] .rf-ci { color: var(--crimson-ink); }
 
@@ -747,38 +812,32 @@ a { color: inherit; }
 /* alternate the side the card sits on so the page has a rhythm */
 .proj:nth-child(even) .proj-shot { order: 2; }
 
-/* The project art IS a playing card — cream stock on the dark table, dealt at
-   a slight angle. It reads as deliberate rather than as an empty placeholder,
-   and an <img> dropped inside simply covers it. */
+/* The project art is a screenshot of the live site — the cards that used to
+   sit here carried no information about the work. Landscape frame, image
+   anchored to the top so the site's header is what shows. */
 .proj-shot {
-    aspect-ratio: 5 / 7;
-    width: min(100%, 320px);
-    justify-self: center;
-    transform: rotate(-2.5deg);
+    position: relative;      /* containing block for the pointer glow */
+    aspect-ratio: 16 / 10;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surf-1);
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55);
     transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.45s ease;
+                border-color 0.45s ease, box-shadow 0.45s ease;
 }
-.proj:nth-child(even) .proj-shot { transform: rotate(2.5deg); }
-.proj:hover .proj-shot,
-.proj:nth-child(even):hover .proj-shot {
-    transform: rotate(0deg) translateY(-10px);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.5) inset,
-        0 34px 70px rgba(0, 0, 0, 0.7);
+.proj-shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
 }
-.proj-shot img { width: 100%; height: 100%; object-fit: cover; grid-area: 1 / 1; }
-
-.shot-mark {
-    width: 46%; height: 46%;
-    fill: var(--ink);
-    grid-area: 1 / 1;
+.proj:hover .proj-shot {
+    transform: translateY(-8px);
+    border-color: var(--line-2);
+    box-shadow: 0 34px 66px rgba(0, 0, 0, 0.7);
 }
-.shot-mark.red { fill: var(--crimson-ink); }
-
-.shot-rank { font-size: 1.25rem; }
-.shot-rank .suit-icon { width: 0.8em; height: 0.8em; }
-.shot-rank.top, .shot-rank:not(.bottom) { top: 10px; left: 13px; }
-.shot-rank.bottom { bottom: 10px; right: 13px; transform: rotate(180deg); }
 
 .proj-tags-top {
     display: flex;
@@ -983,45 +1042,80 @@ a { color: inherit; }
 
 /* ================= contact ================= */
 
-.sec-contact { background: var(--surf-1); }
-.contact-wrap {
-    display: grid;
-    grid-template-columns: clamp(150px, 20vw, 230px) minmax(0, 1fr);
-    gap: clamp(2rem, 6vw, 5rem);
-    align-items: center;
-}
-
-.joker-card {
+/* ---- contact: one card, laid down horizontally -------------------------
+   Cream stock on the dark band, so everything inside has to flip to dark ink
+   — including the buttons, which are otherwise styled for a dark surface and
+   would be invisible here. */
+.contact-card {
     position: relative;
-    aspect-ratio: 5 / 7;
+    max-width: 880px;
+    margin-inline: auto;
     background: var(--card-face);
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
-    transform: rotate(-5deg);
+    color: var(--ink);
+    border-radius: 12px;
+    padding: clamp(2.5rem, 6vw, 4rem) clamp(3rem, 9vw, 6rem);
+    text-align: center;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.6) inset,
+        0 40px 90px rgba(0, 0, 0, 0.7);
+    transform: rotate(-1.2deg);
     transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.sec-contact:hover .joker-card { transform: rotate(-1deg) translateY(-8px); }
-.joker-mark { width: 42%; height: 42%; fill: var(--crimson-ink); }
-.joker-ci {
+.sec-contact:hover .contact-card { transform: rotate(0deg) translateY(-6px); }
+
+/* corner indices, the way the joker card carried them */
+.cc-ci {
     position: absolute;
     font-family: var(--font-hud);
     font-weight: 700;
-    font-size: 0.62rem;
-    line-height: 1.25;
+    font-size: 0.6rem;
+    line-height: 1.3;
     letter-spacing: 0.05em;
     text-align: center;
     color: var(--crimson-ink);
 }
-.joker-ci.top { top: 10px; left: 11px; }
-.joker-ci.bottom { bottom: 10px; right: 11px; transform: rotate(180deg); }
+.cc-ci.top { top: 16px; left: 20px; }
+.cc-ci.bottom { bottom: 16px; right: 20px; transform: rotate(180deg); }
 
-.contact-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+.contact-card .kicker { color: var(--crimson-ink); }
+.contact-card h2 { color: var(--ink); }
+.contact-card .sec-sub { color: var(--ink-soft); margin-inline: auto; }
 
-@media (max-width: 700px) {
-    .contact-wrap { grid-template-columns: 1fr; justify-items: start; }
-    .joker-card { width: 150px; }
+/* the dark-surface button styles have to invert on card stock */
+.contact-card .btn {
+    color: var(--ink);
+    border-color: rgba(31, 36, 48, 0.35);
+}
+.contact-card .btn:hover,
+.contact-card .btn:focus-visible {
+    background: var(--ink);
+    color: var(--card-face);
+    border-color: var(--ink);
+}
+.contact-card .btn-solid {
+    background: var(--ink);
+    color: var(--card-face);
+    border-color: var(--ink);
+}
+.contact-card .btn-solid:hover,
+.contact-card .btn-solid:focus-visible {
+    background: var(--crimson-ink);
+    color: var(--card-face);
+    border-color: var(--crimson-ink);
+}
+.contact-card :focus-visible { outline-color: var(--crimson-ink); }
+
+.contact-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+@media (max-width: 620px) {
+    .contact-card { padding-inline: 1.6rem; transform: none; }
+    .cc-ci { display: none; }
 }
 
 /* ================= footer ================= */
@@ -1046,31 +1140,6 @@ footer p {
     color: var(--text-3);
 }
 
-/* ================= cursor ring ================= */
-
-#cursor-ring {
-    position: fixed;
-    top: 0; left: 0;
-    width: 32px; height: 32px;
-    margin: -16px 0 0 -16px;
-    border: 1px solid rgba(251, 191, 36, 0.5);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 1500;
-    opacity: 0;
-    will-change: transform;
-    transition: opacity 0.3s, width 0.25s, height 0.25s, margin 0.25s,
-                border-color 0.25s, background 0.25s;
-}
-#cursor-ring.on { opacity: 1; }
-#cursor-ring.hot {
-    width: 54px; height: 54px;
-    margin: -27px 0 0 -27px;
-    border-color: var(--gold);
-    background: rgba(251, 191, 36, 0.08);
-}
-@media (pointer: coarse), (hover: none) { #cursor-ring { display: none; } }
-
 /* ==========================================================================
    REDUCED MOTION — kill every ambient animation. The page above is already
    fully legible without motion, so nothing needs a special static layout.
@@ -1079,6 +1148,6 @@ footer p {
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .cue, .beam, #dust::before, #dust::after { animation: none !important; }
-    #dust, .beam, #cursor-ring { display: none; }
+    #dust, .beam { display: none; }
     *, *::before, *::after { transition-duration: 0.01ms !important; }
 }

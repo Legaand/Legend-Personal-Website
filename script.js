@@ -36,6 +36,45 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
 
+    // ---- letter-roll hover -------------------------------------------------
+    // Each character is stacked twice inside an overflow-hidden box; on hover
+    // the pair rolls up one character-height so the twin takes its place,
+    // staggered left to right. The rolled copy is aria-hidden and a plain
+    // visually-hidden label carries the real text, or a screen reader would
+    // announce "VVIISSIITT".
+    function rollify(el) {
+        const textNodes = Array.from(el.childNodes).filter((n) => n.nodeType === 3);
+        const text = textNodes.map((n) => n.textContent).join('').trim();
+        if (!text || el.querySelector('.roll')) return;
+
+        const sr = document.createElement('span');
+        sr.className = 'sr-only';
+        sr.textContent = text;
+
+        const roll = document.createElement('span');
+        roll.className = 'roll';
+        roll.setAttribute('aria-hidden', 'true');
+
+        Array.from(text).forEach((ch, i) => {
+            const slot = document.createElement('span');
+            slot.className = 'roll-i';
+            const a = document.createElement('span');
+            const b = document.createElement('span');
+            a.textContent = ch === ' ' ? '\u00a0' : ch;
+            b.textContent = a.textContent;
+            // the stagger is what makes it read as a roll rather than a jump
+            a.style.transitionDelay = b.style.transitionDelay = (i * 18) + 'ms';
+            slot.append(a, b);
+            roll.appendChild(slot);
+        });
+
+        textNodes.forEach((n) => n.remove());
+        el.prepend(roll);
+        el.prepend(sr);
+    }
+
+    document.querySelectorAll('.btn, .nav-links a').forEach(rollify);
+
     // ---- which section am I in? ------------------------------------------
     // Drives both the narrow-screen text links and the rail. The active state
     // is set here rather than in animations.js so it still tracks under
@@ -95,35 +134,4 @@
     // zone if this ran beside the listener registration above.
     onScroll();
 
-    // ---- trailing cursor ring --------------------------------------------
-    // Decorative: the native cursor stays visible (hiding it costs more in
-    // usability than the effect is worth). Skipped on touch and reduced motion.
-    if (window.matchMedia('(pointer: fine)').matches &&
-        !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        const ring = document.createElement('div');
-        ring.id = 'cursor-ring';
-        ring.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(ring);
-
-        let tx = 0, ty = 0, rx = 0, ry = 0, raf = null;
-        const HOT = 'a, button, .proj, .stat, .tr, .rail-card';
-
-        window.addEventListener('pointermove', (e) => {
-            tx = e.clientX;
-            ty = e.clientY;
-            ring.classList.add('on');
-            ring.classList.toggle('hot', !!(e.target.closest && e.target.closest(HOT)));
-            if (!raf) raf = requestAnimationFrame(follow);
-        }, { passive: true });
-        document.addEventListener('pointerleave', () => ring.classList.remove('on'));
-
-        function follow() {
-            rx += (tx - rx) * 0.18;
-            ry += (ty - ry) * 0.18;
-            ring.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0)';
-            raf = (Math.abs(tx - rx) > 0.4 || Math.abs(ty - ry) > 0.4)
-                ? requestAnimationFrame(follow)
-                : null;
-        }
-    }
 })();
