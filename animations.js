@@ -7,6 +7,16 @@
    Rule: never set a hidden initial state in CSS. Every "from"
    state is established here at runtime, so a no-JS visitor can
    never end up staring at content that was waiting for a tween.
+
+   Stronger rule, learned the hard way: never create a `from`
+   tween for content that is not on screen yet either. A from()
+   renders its start state the moment it is CREATED, so a page
+   full of `gsap.from(el, {scrollTrigger})` is a page that is
+   blank from the first frame and depends on the ticker to become
+   readable. Everything below builds its tween INSIDE the
+   ScrollTrigger callback, when the element is actually arriving —
+   so the resting page is never hidden waiting for a frame that
+   might not come.
    ============================================================ */
 
 (function () {
@@ -17,19 +27,143 @@
 
     gsap.registerPlugin(ScrollTrigger);
 
-    /* The whole motion layer waits until the page is actually visible.
+    const fine = window.matchMedia('(pointer: fine)').matches;
 
-       Every entrance below is a GSAP `from`, which hides its target the moment
-       the tween is *created* and only reveals it as the tween runs. In a
-       background tab Chrome throttles requestAnimationFrame, so the tween
-       never runs and the hero — eyebrow, name, pill, buttons, cue — sits
-       completely blank. Same for every section reveal. Until boot() runs the
-       page stays in its plain CSS state, which is already complete. */
+    /* ---- one motion vocabulary ------------------------------------------
+       The site had a different curve in every call — power3 here, power4
+       there, a hand-written cubic-bezier somewhere else — which is what
+       makes motion read as "animated" rather than as one thing moving. Three
+       curves, each with a job:
+         RISE   long travel, big impact, long tail   (entrances)
+         GLIDE  short travel, quick and quiet        (copy, tags, rows)
+         SETTLE a single small overshoot             (things that arrive
+                                                      in place, like a card
+                                                      landing on the table) */
+    const RISE = 'expo.out';
+    const GLIDE = 'power3.out';
+    const SETTLE = 'back.out(1.35)';
+
+    /* The whole motion layer waits until the page is actually visible.
+       Chrome throttles requestAnimationFrame in a background tab, so a
+       timeline created there never runs. The hero intro below is the one
+       place that still uses `from`, and it is why this gate exists. */
     function boot() {
 
-        /* ---------------------------------------------------------
-           1. The hero: name rises out of a mask, deck spreads open
-           --------------------------------------------------------- */
+        /* =========================================================
+           0. The scroll itself
+           ========================================================= */
+
+        /* Momentum scrolling. The single biggest difference between this
+           page and the sites it is measured against is not any one effect —
+           it is that their scroll has weight. A wheel notch here sets a
+           target and the page eases toward it, so movement starts and stops
+           on a curve instead of in one jump.
+
+           Deliberately WHEEL ONLY, and only on a fine pointer. Touch,
+           keyboard, scrollbar dragging, find-in-page and the browser's own
+           scroll restoration all stay completely native — those are the
+           paths where a hand-rolled scroller breaks accessibility, and none
+           of them are what the effect is for. If any of them moves the page
+           out from under us we notice and hand the scroll straight back.
+
+           It also publishes a per-frame velocity, which is what earns it its
+           place: the falling-card layer reads it and streaks. */
+        const scroller = (function momentum() {
+            if (!fine) return null;
+
+            const doc = document.documentElement;
+            const limit = () => Math.max(0, doc.scrollHeight - window.innerHeight);
+            const clamp = (v) => Math.min(limit(), Math.max(0, v));
+            const LERP = 0.145;
+
+            let pos = window.scrollY;
+            let target = pos;
+            let running = false;
+            let vel = 0;
+            let jump = null;
+
+            // never take the wheel away from something that genuinely
+            // scrolls itself (the nav links strip is a scroller under 1280px)
+            function ownsItsScroll(node) {
+                while (node && node.nodeType === 1 && node !== document.body) {
+                    const s = getComputedStyle(node);
+                    if (/(auto|scroll)/.test(s.overflowY) && node.scrollHeight > node.clientHeight + 1) return true;
+                    if (/(auto|scroll)/.test(s.overflowX) && node.scrollWidth > node.clientWidth + 1) return true;
+                    node = node.parentNode;
+                }
+                return false;
+            }
+
+            window.addEventListener('wheel', (e) => {
+                if (e.ctrlKey || e.defaultPrevented) return;   // pinch-zoom
+                if (ownsItsScroll(e.target)) return;
+                e.preventDefault();
+                if (jump) { jump.kill(); jump = null; }
+                // deltaMode 1 is lines, 2 is pages
+                const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
+                if (!running) { pos = window.scrollY; target = pos; }
+                target = clamp(target + d);
+                running = true;
+            }, { passive: false });
+
+            // in-page links get a real ride rather than a teleport; the CSS
+            // smooth-scroll would fight the loop above, so it is turned off
+            doc.style.scrollBehavior = 'auto';
+            document.addEventListener('click', (e) => {
+                const a = e.target.closest && e.target.closest('a[href^="#"]');
+                if (!a || a.getAttribute('href') === '#') return;
+                const id = a.getAttribute('href').slice(1);
+                const el = document.getElementById(id);
+                if (!el) return;
+                e.preventDefault();
+                const to = clamp(window.scrollY + el.getBoundingClientRect().top);
+                running = false;
+                if (jump) jump.kill();
+                const o = { v: window.scrollY };
+                // distance-aware duration: a short hop should not take as long
+                // as a trip to the footer, or short links feel sluggish
+                const dur = gsap.utils.clamp(0.6, 1.4, Math.abs(to - o.v) / 2600 + 0.55);
+                jump = gsap.to(o, {
+                    v: to, duration: dur, ease: 'power3.inOut', overwrite: true,
+                    onUpdate() { vel = o.v - pos; pos = target = o.v; window.scrollTo(0, o.v); },
+                    onComplete() { jump = null; vel = 0; },
+                });
+                try { history.replaceState(null, '', '#' + id); } catch (err) { /* file:// */ }
+            });
+
+            gsap.ticker.add(() => {
+                if (jump) return;
+
+                /* Check the document every frame rather than listening for a
+                   scroll event. Our own scrollTo lands within a pixel of `pos`,
+                   so a bigger gap than that means something else moved the page
+                   — keyboard, scrollbar, find-in-page, scroll restoration — and
+                   that wins. A scroll listener was tried first and is not good
+                   enough: scroll events are coalesced and can arrive AFTER the
+                   next frame, and by then this loop has already written `pos`
+                   back over the top and yanked the reader home. */
+                if (Math.abs(window.scrollY - pos) > 3) {
+                    pos = target = window.scrollY;
+                    running = false;
+                    vel = 0;
+                    return;
+                }
+
+                if (!running) { vel *= 0.82; if (Math.abs(vel) < 0.15) vel = 0; return; }
+                const d = target - pos;
+                if (Math.abs(d) < 0.35) { pos = target; running = false; vel = 0; }
+                else { pos += d * LERP; vel = d * LERP; }
+                window.scrollTo(0, pos);
+            });
+
+            return { velocity: () => vel };
+        })();
+
+        const velocity = () => (scroller ? scroller.velocity() : 0);
+
+        /* =========================================================
+           1. The hero
+           ========================================================= */
 
         const hero = document.querySelector('.hero');
         const title = document.querySelector('.title');
@@ -51,27 +185,64 @@
             words = Array.from(title.querySelectorAll('.word'));
         }
 
-        const intro = gsap.timeline({ defaults: { ease: 'power3.out' } });
+        /* The name does not just slide up — it pivots up off its own baseline,
+           left edge first, the way a card being turned over comes up on one
+           corner. Rotation and skew are what separate that from a lift. */
+        const intro = gsap.timeline({ defaults: { ease: GLIDE } });
         intro
-            .from('.eyebrow', { autoAlpha: 0, y: 14, duration: 0.7 })
-            .from(words, { yPercent: 115, duration: 1.05, stagger: 0.09, ease: 'power4.out' }, 0.12)
-            .from('.pill', { autoAlpha: 0, y: 12, duration: 0.6, stagger: 0.07 }, 0.7)
-            .from('.hero-cta .btn', { autoAlpha: 0, y: 12, duration: 0.6, stagger: 0.08 }, 0.82)
-            .from('.cue', { autoAlpha: 0, duration: 0.6 }, 1.1);
+            /* The follow-spot comes up like a lamp warming, not like a shape
+               sliding in — opacity only, because .beam's transform is already
+               owned by the infinite beam-sway keyframes and a CSS animation
+               beats an inline style outright. */
+            .from('.beam', { autoAlpha: 0, duration: 1.8, ease: 'power2.out' }, 0)
+            .from('.eyebrow', { autoAlpha: 0, y: 16, duration: 0.8 }, 0.05)
+            .from(words, {
+                yPercent: 118,
+                rotation: 6,
+                skewY: 4,
+                transformOrigin: '0% 100%',
+                duration: 1.3,
+                stagger: 0.12,
+                ease: RISE,
+            }, 0.14)
+            .from('.pill', { autoAlpha: 0, y: 14, duration: 0.7, stagger: 0.08 }, 0.72)
+            .from('.hero-cta .btn', { autoAlpha: 0, y: 14, scale: 0.96, duration: 0.7, stagger: 0.09, ease: SETTLE }, 0.84)
+            .from('.cue', { autoAlpha: 0, y: -10, duration: 0.7 }, 1.15);
 
         // the hero text lifts away as the page takes over
         if (hero) {
             gsap.to('.hero-inner', {
-                yPercent: -18,
+                yPercent: -22,
                 autoAlpha: 0,
                 ease: 'none',
                 scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
             });
+            // the follow-spot fades a beat behind the text rather than leaving
+            // with it, so the hero has two speeds on the way out
+            gsap.to('.beam', {
+                autoAlpha: 0,
+                ease: 'none',
+                scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom+=40% top', scrub: true },
+            });
         }
 
-        /* ---------------------------------------------------------
-           2b. The rail, and the falling cards behind the page.
-           --------------------------------------------------------- */
+        /* The name drifts a few pixels against the pointer. Kept on .title
+           itself: .hero-inner is already owned by the scroll scrub above, and
+           two tweens writing the same transform fight. */
+        if (fine && title && hero) {
+            const tx = gsap.quickTo(title, 'x', { duration: 0.9, ease: 'power3.out' });
+            const ty = gsap.quickTo(title, 'y', { duration: 0.9, ease: 'power3.out' });
+            hero.addEventListener('pointermove', (e) => {
+                const nx = (e.clientX / window.innerWidth) - 0.5;
+                const ny = (e.clientY / window.innerHeight) - 0.5;
+                tx(nx * 16); ty(ny * 10);
+            });
+            hero.addEventListener('pointerleave', () => { tx(0); ty(0); });
+        }
+
+        /* =========================================================
+           2. The rail
+           ========================================================= */
 
         /* ---- the rail: the current section's card turns face-up ----
            The flip is 2D on purpose (scaleX through ~0, swap sides with
@@ -135,8 +306,23 @@
                         autoAlpha: 1,
                     };
                     if (animate) {
-                        gsap.to(p.card, Object.assign(to, { duration: 0.7, ease: 'power3.out' }));
-                        if (p.num) gsap.to(p.num, { y: s.y, yPercent: -50, duration: 0.7, ease: 'power3.out' });
+                        /* The whole wheel does not snap round as one rigid
+                           object: each card starts a beat after the one nearer
+                           the front, so the run ripples the way a spread does
+                           when you square it up. The card being turned to gets
+                           the overshoot; the rest just glide. */
+                        const lag = Math.abs(i - centre) * 0.035;
+                        gsap.to(p.card, Object.assign(to, {
+                            duration: on ? 0.85 : 0.72,
+                            delay: on ? 0 : lag,
+                            ease: on ? SETTLE : GLIDE,
+                        }));
+                        if (p.num) {
+                            gsap.to(p.num, {
+                                y: s.y, yPercent: -50, duration: 0.72,
+                                delay: lag, ease: GLIDE,
+                            });
+                        }
                     } else {
                         gsap.set(p.card, to);
                         if (p.num) gsap.set(p.num, { y: s.y, yPercent: -50 });
@@ -144,33 +330,72 @@
                 });
             }
 
-            // the flip only swaps the sides; the wheel handles every position
-            function turn(p, on) {
+            /* The turn only swaps the sides; the wheel handles every position.
+
+               It is a vertical ROLL, not a flip. The old squash-through-zero
+               scaleX read as the card blinking out and a different one
+               blinking in — an appear/disappear, unrelated to anything else on
+               screen. Here the two sides travel together in the direction the
+               wheel is already turning: the outgoing sheet rolls out one way
+               while the incoming sheet arrives from the other, so the sides
+               tile against each other and the card reads as one reel moving
+               with the scroll.
+
+               Still strictly 2D. The rail is fixed UI and ANY 3D transform on
+               a card makes Chromium paint it above other fixed UI regardless
+               of z-index — here that would put cards over the nav. */
+            const ROLL = 0.52;
+
+            function turn(p, on, dir) {
                 if (!p || !p.face) return;
                 if (p.num) p.num.classList.toggle('on', on);
-                gsap.killTweensOf([p.back, p.face, p.label]);
+
+                const faceSheet = p.face.firstElementChild;
+                const backSheet = p.back && p.back.firstElementChild;
+                gsap.killTweensOf([p.back, p.face, p.label, faceSheet, backSheet]);
+
+                // dir -1 is travelling up, which is what scrolling DOWN does to
+                // the wheel. 105 rather than 100 so a rounding difference
+                // between the sheet and its window can never leave a sliver.
+                const d = dir < 0 ? -1 : 1;
+                const out = 105 * d;          // where the leaving sheet goes
+                const from = -105 * d;        // where the arriving sheet starts
+
+                const leaving = on ? backSheet : faceSheet;
+                const arriving = on ? faceSheet : backSheet;
+                const leavingSide = on ? p.back : p.face;
+                const arrivingSide = on ? p.face : p.back;
+
                 const tl = gsap.timeline();
+                // both sides are on screen for the whole roll; only at the end
+                // does the one that left get put away
+                tl.set(arrivingSide, { autoAlpha: 1 }, 0)
+                  .set(arriving, { yPercent: from }, 0)
+                  .to(arriving, { yPercent: 0, duration: ROLL, ease: GLIDE }, 0)
+                  .set(leavingSide, { autoAlpha: 0 }, ROLL)
+                  // park the sheet back at home so the next roll starts clean
+                  .set(leaving, { yPercent: 0 }, ROLL);
+                if (leaving) tl.to(leaving, { yPercent: out, duration: ROLL, ease: GLIDE }, 0);
+
                 if (on) {
-                    tl.to(p.back, { scaleX: 0.02, duration: 0.14, ease: 'power2.in' }, 0.12)
-                      .set(p.back, { autoAlpha: 0 }, 0.26)
-                      .set(p.face, { autoAlpha: 1, scaleX: 0.02 }, 0.26)
-                      .to(p.face, { scaleX: 1, duration: 0.16, ease: 'power2.out' }, 0.261)
-                      .to(p.label, { autoAlpha: 1, duration: 0.3, ease: 'power2.out' }, 0.3);
+                    // the label is parked at autoAlpha 0 by the deal-in, so
+                    // this has to be a `to` — a from() would animate 0 → 0
+                    tl.set(p.label, { x: -8 }, 0.16)
+                      .to(p.label, { autoAlpha: 1, x: 0, duration: 0.4, ease: GLIDE }, 0.18);
                 } else {
-                    tl.to(p.label, { autoAlpha: 0, duration: 0.18, ease: 'power2.in' }, 0)
-                      .to(p.face, { scaleX: 0.02, duration: 0.13, ease: 'power2.in' }, 0)
-                      .set(p.face, { autoAlpha: 0 }, 0.14)
-                      .set(p.back, { autoAlpha: 1, scaleX: 0.02 }, 0.14)
-                      .to(p.back, { scaleX: 1, duration: 0.13, ease: 'power2.out' }, 0.141);
+                    tl.to(p.label, { autoAlpha: 0, duration: 0.18, ease: 'power2.in' }, 0);
                 }
             }
 
-            // deal in: the wheel swings up from off the left edge
+            // deal in: the wheel swings up from off the left edge, card by card
             parts.forEach((p) => {
                 gsap.set(p.card, { autoAlpha: 0, x: -260, y: 0, rotation: -40, yPercent: -50 });
-                gsap.set(p.face, { autoAlpha: 0, scaleX: 1 });
-                gsap.set(p.back, { autoAlpha: 1, scaleX: 1 });
+                gsap.set(p.face, { autoAlpha: 0 });
+                gsap.set(p.back, { autoAlpha: 1 });
                 gsap.set(p.label, { autoAlpha: 0 });
+                // both sheets start at home; the roll moves them, not their sides
+                if (p.face.firstElementChild) gsap.set(p.face.firstElementChild, { yPercent: 0 });
+                if (p.back && p.back.firstElementChild) gsap.set(p.back.firstElementChild, { yPercent: 0 });
                 if (p.num) gsap.set(p.num, { autoAlpha: 0, yPercent: -50 });
             });
             gsap.delayedCall(0.35, () => {
@@ -184,9 +409,14 @@
                 if (i === current) return;
                 const prev = current;
                 current = i;
+                /* Which way the reel rolls. Scrolling DOWN moves to a higher
+                   index, and a higher index sits lower on the arc, so that card
+                   swings UP to reach the front — the roll has to travel the
+                   same way or the card contradicts the wheel carrying it. */
+                const dir = (prev < 0 || i > prev) ? -1 : 1;
                 layout(i, true);                   // the whole wheel turns
-                if (prev >= 0 && parts[prev]) turn(parts[prev], false);
-                if (i >= 0 && parts[i]) turn(parts[i], true);
+                if (prev >= 0 && parts[prev]) turn(parts[prev], false, dir);
+                if (i >= 0 && parts[i]) turn(parts[i], true, dir);
             };
 
             // script.js runs first and its observer may already have marked a
@@ -197,7 +427,10 @@
             window.addEventListener('resize', () => layout(current, false));
         })();
 
-        /* ---- cards drifting down the gutters, clickable ---- */
+        /* =========================================================
+           3. The falling cards
+           ========================================================= */
+
         (function drift() {
             const layer = document.getElementById('drift');
             if (!layer) return;
@@ -206,10 +439,23 @@
             // and slow, the near ones large and quicker — that spread is what
             // makes it read as depth rather than as scattered confetti
             const TIERS = [
-                { cls: 'd-far',  n: 15, w: 86,  min: 70, max: 105 },
-                { cls: 'd-mid',  n: 10, w: 140, min: 52, max: 78 },
-                { cls: 'd-near', n: 5, w: 205, min: 38, max: 56 },
+                { cls: 'd-far',  n: 15, w: 86,  min: 70, max: 105, pull: 0.35 },
+                { cls: 'd-mid',  n: 10, w: 140, min: 52, max: 78,  pull: 0.75 },
+                { cls: 'd-near', n: 5,  w: 205, min: 38, max: 56,  pull: 1.3 },
             ];
+
+            /* One container per tier. The cards themselves are owned by their
+               fall tween, which writes the whole transform — so the scroll
+               reaction has to live on a separate element or the two fight over
+               it every frame. Per TIER rather than per card: three moving
+               elements instead of thirty, and the tier is the unit of depth
+               anyway. */
+            const layers = TIERS.map((t) => {
+                const g = document.createElement('div');
+                g.className = 'dtier';
+                layer.appendChild(g);
+                return { host: g, set: gsap.quickSetter(g, 'y', 'px'), pull: t.pull };
+            });
 
             function float(el, w, min, max, immediate) {
                 const h = w * 7 / 5;
@@ -231,106 +477,223 @@
                 });
             }
 
-            TIERS.forEach((t) => {
+            TIERS.forEach((t, ti) => {
                 for (let i = 0; i < t.n; i++) {
                     const el = document.createElement('div');
                     el.className = 'dcard ' + t.cls;
                     el.innerHTML = '<svg><use href="#card-back"/></svg>';
-                    layer.appendChild(el);
+                    layers[ti].host.appendChild(el);
                     float(el, t.w, t.min, t.max, true);
                 }
             });
+
+            /* The layer answers the scroll. Each tier is dragged by a different
+               amount, so a hard flick shears the three depths apart and they
+               close back up as you stop — the parallax you would get from
+               moving past real objects, which a fixed layer otherwise never
+               gets. Smoothed so it trails the wheel rather than tracking it. */
+            let smooth = 0;
+            gsap.ticker.add(() => {
+                const v = velocity();
+                smooth += (v - smooth) * 0.09;
+                if (Math.abs(smooth) < 0.02) { smooth = 0; }
+                const drag = gsap.utils.clamp(-90, 90, -smooth * 2.2);
+                for (let i = 0; i < layers.length; i++) layers[i].set(drag * layers[i].pull);
+            });
         })();
 
-        /* ---------------------------------------------------------
-           Section reveals
-           --------------------------------------------------------- */
+        /* =========================================================
+           4. Section reveals
+           ========================================================= */
 
-        const reveal = (targets, opts) => {
-            gsap.utils.toArray(targets).forEach((el) => {
-                gsap.from(el, Object.assign({
-                    autoAlpha: 0,
-                    y: 26,
-                    duration: 0.8,
-                    ease: 'power3.out',
-                    scrollTrigger: { trigger: el, start: 'top 86%' },
-                }, opts || {}));
-            });
-        };
+        /* Build the tween when the element ARRIVES, never at boot. See the
+           note at the top of the file: a from() created up front renders its
+           hidden state immediately, so a page of them is a blank page waiting
+           on the ticker. */
+        /* Every reveal below ends exactly where the stylesheet already wanted
+           the element, so it hands the transform BACK when it is done. Left
+           inline, `transform: translate(0px, 0px)` outranks any stylesheet
+           rule — which quietly killed .btn:active on the project buttons and
+           would have reset .contact-card's dealt angle. Never clear it on
+           something a scrub tween is still writing (the project art). */
+        const HANDBACK = { clearProps: 'transform' };
 
-        reveal('.sec-head');
-        reveal('.proj');
-        reveal('.tr', { y: 18, duration: 0.6 });
-        reveal('.stack-row', { y: 14, duration: 0.55 });
-        reveal('.paper-list li');
-        reveal('.contact-card', { y: 30 });
-
-        gsap.from('.stat', {
-            autoAlpha: 0,
-            y: 24,
-            duration: 0.7,
-            ease: 'power3.out',
-            stagger: 0.07,
-            scrollTrigger: { trigger: '.stats', start: 'top 85%' },
-        });
-
-        /* ---------------------------------------------------------
-           The count — numbers roll up when the band arrives
-           --------------------------------------------------------- */
-
-        function format(value, decimals, suffix) {
-            const n = decimals
-                ? value.toFixed(decimals)
-                : Math.round(value).toLocaleString('en-US');
-            return n + (suffix || '');
-        }
-
-        document.querySelectorAll('.stat-n').forEach((el) => {
-            const to = parseFloat(el.dataset.to);
-            if (isNaN(to)) return;
-            const decimals = parseInt(el.dataset.decimals || '0', 10);
-            const suffix = el.dataset.suffix || '';
-            const counter = { v: 0 };
-
-            // The HTML carries the final value so no-JS/reduced-motion readers see
-            // the real number. Now that we know the count-up will run, wind it back
-            // to zero — the band sits below the fold, so this is never seen as a flash.
-            el.textContent = format(0, decimals, suffix);
-
+        function onArrival(el, start, build) {
             ScrollTrigger.create({
                 trigger: el,
-                start: 'top 88%',
+                start: start || 'top 86%',
                 once: true,
-                onEnter() {
-                    gsap.to(counter, {
-                        v: to,
-                        duration: 1.8,
-                        ease: 'power2.out',
-                        onUpdate() { el.textContent = format(counter.v, decimals, suffix); },
-                        onComplete() { el.textContent = format(to, decimals, suffix); },
-                    });
-                },
+                onEnter: () => build(el),
+            });
+        }
+
+        /* Headings rise out of a mask like the hero name does, so the page has
+           one reveal idea rather than a different fade per section. The wrapper
+           needs the descender padding (.ln in the stylesheet) — Abril Fatface
+           hangs well outside a 1.02 line box and a plain overflow:hidden
+           shaves the g and the y. */
+        function maskLines(h) {
+            if (!h || h.querySelector('.ln')) return [];
+            const ln = document.createElement('span');
+            ln.className = 'ln';
+            const inner = document.createElement('span');
+            while (h.firstChild) inner.appendChild(h.firstChild);
+            ln.appendChild(inner);
+            h.appendChild(ln);
+            return [inner];
+        }
+
+        document.querySelectorAll('.sec-head').forEach((head) => {
+            const h2 = head.querySelector('h2');
+            const risers = maskLines(h2);
+            const rest = [head.querySelector('.kicker'), head.querySelector('.sec-sub')].filter(Boolean);
+            onArrival(head, 'top 88%', () => {
+                const tl = gsap.timeline();
+                if (rest[0]) tl.from(rest[0], Object.assign({ autoAlpha: 0, x: -14, duration: 0.6, ease: GLIDE }, HANDBACK), 0);
+                if (risers.length) tl.from(risers, Object.assign({ yPercent: 112, duration: 1.1, ease: RISE }, HANDBACK), 0.08);
+                if (rest[1]) tl.from(rest[1], Object.assign({ autoAlpha: 0, y: 16, duration: 0.7, ease: GLIDE }, HANDBACK), 0.34);
             });
         });
 
-        /* ---- a light that follows the pointer across the project art ---- */
-        document.querySelectorAll('.proj-shot').forEach((shot) => {
-            if (!window.matchMedia('(pointer: fine)').matches) return;
-            const glow = document.createElement('span');
-            glow.setAttribute('aria-hidden', 'true');
-            glow.style.cssText =
-                'position:absolute;inset:0;pointer-events:none;opacity:0;' +
-                'background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),' +
-                'rgba(251,191,36,0.16),transparent 65%);transition:opacity .35s;';
-            shot.appendChild(glow);
-            shot.addEventListener('pointermove', (e) => {
-                const r = shot.getBoundingClientRect();
-                glow.style.setProperty('--mx', ((e.clientX - r.left) / r.width) * 100 + '%');
-                glow.style.setProperty('--my', ((e.clientY - r.top) / r.height) * 100 + '%');
-                glow.style.opacity = '1';
+        /* A project deals in: the art wipes open from its bottom edge with the
+           image settling back from an overscale, then the copy follows line by
+           line. The wipe is a clip-path on the frame and the settle is a scale
+           on the image — neither touches .proj-shot's own transform, which the
+           hover lift owns. */
+        document.querySelectorAll('.proj').forEach((proj) => {
+            const shot = proj.querySelector('.proj-shot');
+            const img = shot && shot.querySelector('img');
+            const body = proj.querySelector('.proj-body');
+            const bits = body ? Array.from(body.children) : [];
+            const flip = Array.from(proj.parentNode.children).indexOf(proj) % 2 === 1;
+
+            onArrival(proj, 'top 82%', () => {
+                const tl = gsap.timeline();
+                if (shot) {
+                    tl.fromTo(shot,
+                        { clipPath: 'inset(0% 0% 100% 0%)' },
+                        { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.15, ease: RISE }, 0);
+                }
+                if (img) {
+                    tl.from(img, { scale: 1.28, xPercent: flip ? 4 : -4, duration: 1.4, ease: RISE }, 0);
+                }
+                if (bits.length) {
+                    // .proj-body's direct children include the Visit button
+                    tl.from(bits, Object.assign({
+                        autoAlpha: 0, y: 22, duration: 0.75, stagger: 0.08, ease: GLIDE,
+                    }, HANDBACK), 0.22);
+                }
             });
-            shot.addEventListener('pointerleave', () => { glow.style.opacity = '0'; });
+
+            // the art breathes against the scroll inside its own frame
+            if (img) {
+                gsap.fromTo(img, { yPercent: -3 }, {
+                    yPercent: 3,
+                    ease: 'none',
+                    scrollTrigger: { trigger: proj, start: 'top bottom', end: 'bottom top', scrub: 0.6 },
+                });
+            }
         });
+
+        /* Rows arrive as a run, not one at a time: everything that crosses the
+           line in the same frame shares one staggered tween. That is what
+           ScrollTrigger.batch is for, and it is the difference between a list
+           that deals and a list that pops. */
+        function batch(sel, opts) {
+            const els = gsap.utils.toArray(sel);
+            if (!els.length) return;
+            ScrollTrigger.batch(els, {
+                start: 'top 90%',
+                once: true,
+                onEnter: (group) => gsap.from(group, Object.assign({
+                    autoAlpha: 0,
+                    y: 24,
+                    duration: 0.8,
+                    ease: GLIDE,
+                    stagger: 0.08,
+                    overwrite: true,
+                }, HANDBACK, opts || {})),
+            });
+        }
+
+        // the track record: the big number slides in from the margin, the
+        // entry itself rises — two parts moving, which reads as one row
+        document.querySelectorAll('.tr').forEach((row) => {
+            const n = row.querySelector('.tr-n');
+            const body = row.querySelector('.tr-body');
+            onArrival(row, 'top 90%', () => {
+                const tl = gsap.timeline();
+                if (n) tl.from(n, Object.assign({ autoAlpha: 0, x: -22, duration: 0.7, ease: RISE }, HANDBACK), 0);
+                if (body) tl.from(body, Object.assign({ autoAlpha: 0, y: 20, duration: 0.75, ease: GLIDE }, HANDBACK), 0.08);
+            });
+        });
+
+        batch('.stack-row', { y: 16, duration: 0.6, stagger: 0.06 });
+        batch('.paper-list li', { y: 20, stagger: 0.07 });
+
+        document.querySelectorAll('.contact-card').forEach((card) => {
+            onArrival(card, 'top 85%', () => {
+                // rotation is relative to the angle the card is already dealt
+                // at, and clearProps hands that angle back to the stylesheet
+                gsap.from(card, Object.assign({
+                    autoAlpha: 0, y: 46, rotation: '-=1.6', scale: 0.97,
+                    duration: 1.1, ease: RISE, transformOrigin: '50% 100%',
+                }, HANDBACK));
+            });
+        });
+
+        /* =========================================================
+           5. Pointer detail
+           ========================================================= */
+
+        /* ---- a light that follows the pointer across the project art ---- */
+        if (fine) {
+            document.querySelectorAll('.proj-shot').forEach((shot) => {
+                const glow = document.createElement('span');
+                glow.setAttribute('aria-hidden', 'true');
+                glow.style.cssText =
+                    'position:absolute;inset:0;pointer-events:none;opacity:0;z-index:2;' +
+                    'background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),' +
+                    'rgba(251,191,36,0.16),transparent 65%);transition:opacity .35s;';
+                shot.appendChild(glow);
+                shot.addEventListener('pointermove', (e) => {
+                    const r = shot.getBoundingClientRect();
+                    glow.style.setProperty('--mx', ((e.clientX - r.left) / r.width) * 100 + '%');
+                    glow.style.setProperty('--my', ((e.clientY - r.top) / r.height) * 100 + '%');
+                    glow.style.opacity = '1';
+                });
+                shot.addEventListener('pointerleave', () => { glow.style.opacity = '0'; });
+            });
+        }
+
+        /* The hero's call to action leans toward the cursor before you reach
+           it. Scoped to that one button on purpose: .btn's press state is a
+           CSS :active transform and an inline transform from GSAP would
+           silently kill it everywhere else, and .cue's transform is already
+           spoken for twice over (translateX(-50%) for centring, plus the
+           cue-bob keyframes, which beat an inline style outright). */
+        if (fine) {
+            document.querySelectorAll('.hero-cta .btn').forEach((el) => {
+                el.classList.add('magnetic');
+                const qx = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power3.out' });
+                const qy = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power3.out' });
+                const qs = gsap.quickTo(el, 'scale', { duration: 0.35, ease: 'power2.out' });
+                const REACH = 90;                 // px of pull around the button
+                function move(e) {
+                    const r = el.getBoundingClientRect();
+                    const dx = e.clientX - (r.left + r.width / 2);
+                    const dy = e.clientY - (r.top + r.height / 2);
+                    const d = Math.hypot(dx, dy);
+                    const k = Math.max(0, 1 - d / (Math.max(r.width, r.height) / 2 + REACH));
+                    qx(dx * k * 0.35);
+                    qy(dy * k * 0.35);
+                }
+                window.addEventListener('pointermove', move, { passive: true });
+                el.addEventListener('pointerleave', () => { qx(0); qy(0); qs(1); });
+                el.addEventListener('pointerdown', () => qs(0.96));
+                el.addEventListener('pointerup', () => qs(1));
+            });
+        }
 
         ScrollTrigger.refresh();
 

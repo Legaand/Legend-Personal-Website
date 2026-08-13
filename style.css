@@ -34,6 +34,7 @@
     /* rhythm */
     --wrap: 1180px;
     --rail-w: clamp(212px, 16vw, 288px);
+    --index-w: clamp(190px, 14vw, 250px);
     --rail-card: clamp(126px, 11.5vw, 178px);
     --gut: clamp(1.25rem, 4vw, 3rem);
 }
@@ -225,7 +226,7 @@ a { color: inherit; }
    must survive all the way down to the smallest screen — they used to be
    hidden under 860px, which combined with the rail taking over above 1100px
    left phones with no way to reach a section at all. Let them scroll instead. */
-@media (max-width: 1099px) {
+@media (max-width: 1279px) {
     .nav-links {
         min-width: 0;              /* required for a flex child to shrink */
         overflow-x: auto;
@@ -299,6 +300,277 @@ a { color: inherit; }
 .btn-solid:hover, .btn-solid:focus-visible { background: #FFD35C; color: var(--bg); border-color: #FFD35C; }
 .arrow { display: inline-block; transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
 .btn:hover .arrow, .btn:focus-visible .arrow { transform: translate(3px, -3px); }
+
+
+/* ==========================================================================
+   THE CORD + THE TURNOVER
+   The cord swaps the site between the show and a plain, professional version.
+   It is a real <button> so it works from the keyboard; dragging is layered on.
+   The transition is a ribbon spread of cards flourishing across the screen —
+   his own move, rather than the obvious stage curtain.
+   ========================================================================== */
+
+#cord[hidden] { display: none; }
+#cord {
+    position: fixed;
+    top: 0;
+    right: clamp(10px, 3vw, 60px);
+    z-index: 1150;
+    width: 200px;
+    height: 360px;
+    padding: 0;
+    border: 0;
+    background: none;
+    /* the button spans the rope's whole swing, most of which is empty — only
+       the rope's own hit-path and the tassel take pointer events */
+    pointer-events: none;
+    cursor: grab;
+    touch-action: none;
+}
+#cord:active { cursor: grabbing; }
+@media (max-width: 1279px) { #cord { top: var(--nav-h, 58px); } }
+
+/* the bracket it hangs from. The rope is drawn from this exact point, so the
+   two can never separate however far the cord is pulled. */
+.cord-mount {
+    position: absolute;
+    top: 0;
+    left: 100px;
+    margin-left: -15px;
+    width: 30px;
+    height: 9px;
+    border-radius: 0 0 6px 6px;
+    background: linear-gradient(180deg, #6B4C06, var(--gold-deep) 55%, #4A3304);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(255, 226, 150, 0.35);
+    pointer-events: none;
+}
+
+.cord-draw {
+    position: absolute;
+    inset: 0;
+    width: 200px;
+    height: 360px;
+    overflow: visible;
+    pointer-events: none;
+}
+/* a generous invisible stroke so the thin rope is still easy to grab */
+.cord-hit   { fill: none; stroke: transparent; stroke-width: 30; pointer-events: stroke; }
+.cord-back  { fill: none; stroke: #3A2703; stroke-width: 7; stroke-linecap: round; }
+/* the dashes read as the twist of a braided cord */
+.cord-front { fill: none; stroke: var(--gold); stroke-width: 5; stroke-linecap: round;
+              stroke-dasharray: 2.5 4.5; }
+
+.cord-tassel {
+    position: absolute;
+    top: 0; left: 0;
+    width: 32px;
+    margin-left: -16px;
+    transform-origin: 50% 0;
+    pointer-events: auto;
+    will-change: transform;
+}
+.tassel-cap {
+    display: block;
+    height: 18px;
+    border-radius: 5px 5px 3px 3px;
+    background: linear-gradient(180deg, #FFE9A8, var(--gold) 40%, #7A5606);
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.55);
+}
+.tassel-skirt {
+    display: block;
+    height: 38px;
+    margin-top: 1px;
+    background: repeating-linear-gradient(90deg,
+        rgba(251, 191, 36, 0.95) 0 1.5px,
+        rgba(120, 84, 8, 0.9) 1.5px 3px);
+    clip-path: polygon(6% 0, 94% 0, 78% 100%, 22% 100%);
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+}
+#cord:hover .tassel-cap,
+#cord:focus-visible .tassel-cap {
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,0.4), 0 0 14px rgba(251,191,36,0.7);
+}
+
+#cord::after {
+    content: 'pull';
+    position: absolute;
+    top: 150px;
+    right: 100%;
+    margin-right: 4px;
+    font-family: var(--font-hud);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+    white-space: nowrap;
+    transition: letter-spacing 0.3s, color 0.3s;
+    pointer-events: none;
+}
+#cord:hover::after, #cord:focus-visible::after { letter-spacing: 0.36em; color: #FFD97A; }
+body.plain #cord::after { color: var(--text-2); text-shadow: none; }
+body.plain #cord:hover::after { color: var(--text); }
+
+/* ---- the swap: the new state spreads out from the cord ------------------
+   Animated with the View Transitions API, which snapshots the old and new
+   views so they can be tweened; a bare class change repaints in one frame.
+
+   Three layers move against each other rather than one uniform motion:
+     · the NEW view is revealed through a soft radial mask that grows from the
+       cord's own position, so the change is visibly caused by the pull
+     · its leading edge is feathered, not a hard line
+     · the OLD view sinks, blurs and desaturates underneath as it is uncovered
+   `--reveal` is a registered custom property; without @property a percentage
+   inside mask-image cannot be interpolated and the mask would jump. */
+@property --reveal {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+}
+
+::view-transition-image-pair(root) { isolation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) { mix-blend-mode: normal; animation: none; }
+
+::view-transition-old(root) {
+    z-index: 1;
+    animation: swap-old 1.05s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+::view-transition-new(root) {
+    z-index: 2;
+    /* origin is written by script.js from the cord's real position */
+    --reveal: 0%;
+    mask-image: radial-gradient(circle at var(--swap-x, 88%) var(--swap-y, 8%),
+        #000 var(--reveal),
+        rgba(0, 0, 0, 0.55) calc(var(--reveal) + 5%),
+        transparent calc(var(--reveal) + 13%));
+    -webkit-mask-image: radial-gradient(circle at var(--swap-x, 88%) var(--swap-y, 8%),
+        #000 var(--reveal),
+        rgba(0, 0, 0, 0.55) calc(var(--reveal) + 5%),
+        transparent calc(var(--reveal) + 13%));
+    animation: swap-new 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes swap-new {
+    from { --reveal: 0%;   transform: scale(1.05) rotate(0.8deg);  filter: brightness(1.3); }
+    55%  {                                                          filter: brightness(1.06); }
+    to   { --reveal: 155%; transform: scale(1)    rotate(0deg);    filter: brightness(1); }
+}
+/* counter-rotates the other way, so the two sheets shear against each other */
+@keyframes swap-old {
+    from { transform: scale(1)    translateY(0)    rotate(0deg);     filter: blur(0) saturate(1); }
+    to   { transform: scale(0.93) translateY(18px) rotate(-1.1deg);  filter: blur(8px) saturate(0.35); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(root),
+    ::view-transition-old(root),
+    ::view-transition-new(root) { animation: none !important; }
+}
+
+
+/* ---- layering: each region gets its own snapshot ------------------------
+   By default the whole page is ONE snapshot, so however good the root
+   animation is it can only ever move as a single sheet. Naming regions gives
+   each its own group, which the browser animates independently — so the
+   change cascades through the page instead of arriving all at once.
+
+   The rail and the plain-mode index deliberately share the name `side`: only
+   one of them is ever rendered, so the browser treats them as the same
+   element and MORPHS one into the other rather than crossfading. */
+.hero-inner { view-transition-name: vt-hero; }
+/* The name is the anchor the change happens around — it holds its position
+   and only its colour resolves, so the page reads as the same site changing
+   rather than being replaced. (Borrowed from francoisrisoud.com, where a
+   persistent blob survives while everything rebuilds around it.) */
+.title { view-transition-name: vt-name; }
+::view-transition-group(vt-name) {
+    animation-duration: 0.7s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(vt-name) { animation: anchor-out 0.45s ease both; }
+::view-transition-new(vt-name) { animation: anchor-in 0.55s 0.22s ease both; }
+@keyframes anchor-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes anchor-in  { from { opacity: 0; } to { opacity: 1; } }
+#rail, #index { view-transition-name: vt-side; }
+#work    { view-transition-name: vt-s1; }
+#track   { view-transition-name: vt-s2; }
+#stack   { view-transition-name: vt-s3; }
+#contact { view-transition-name: vt-s4; }
+footer   { view-transition-name: vt-foot; }
+/* The cord is deliberately NOT named. Giving it its own group and pinning it
+   with `animation: none` on both snapshots left the old and new cords stacked
+   and fully opaque for the whole transition — two ropes at once, at different
+   swing angles. Unnamed, it just travels with the root like everything else. */
+
+/* ---- the wave -----------------------------------------------------------
+   Naming the regions above is what lets them move independently, but it also
+   takes them OUT of the root snapshot — so the radial mask that grows from
+   the cord no longer touches any of them. The result was a transition that
+   claimed to spread from the pull and in fact ran a fixed 0.20/0.27/0.34/0.41
+   cascade in DOM order, whichever end of the page you were standing at.
+
+   Each delay is now a variable, and script.js writes it at pull time from the
+   region's real distance to the cord, measured the same way the mask measures
+   its own radius. Scroll to the footer and pull, and the change starts at the
+   footer. The stagger is a wavefront, not a queue.
+
+   The fallbacks are the old fixed cascade, so this degrades to the previous
+   behaviour if the JS never runs. */
+::view-transition-group(vt-side) {
+    animation-duration: 0.85s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(vt-side) { animation: layer-out 0.4s  var(--w-side, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-new(vt-side) { animation: layer-in  0.6s  var(--w-side, 0.30s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+::view-transition-old(vt-hero) { animation: layer-out 0.34s var(--w-hero, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-new(vt-hero) { animation: layer-in  0.62s var(--w-hero, 0.12s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+::view-transition-old(vt-s1)   { animation: layer-out 0.34s var(--w-s1, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-old(vt-s2)   { animation: layer-out 0.34s var(--w-s2, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-old(vt-s3)   { animation: layer-out 0.34s var(--w-s3, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-old(vt-s4)   { animation: layer-out 0.34s var(--w-s4, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-old(vt-foot) { animation: layer-out 0.34s var(--w-foot, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+
+::view-transition-new(vt-s1)   { animation: layer-in  0.62s var(--w-s1, 0.20s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+::view-transition-new(vt-s2)   { animation: layer-in  0.62s var(--w-s2, 0.27s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+::view-transition-new(vt-s3)   { animation: layer-in  0.62s var(--w-s3, 0.34s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+::view-transition-new(vt-s4)   { animation: layer-in  0.62s var(--w-s4, 0.41s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+::view-transition-new(vt-foot) { animation: layer-in  0.62s var(--w-foot, 0.48s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Each region also moves along its OWN axis: outward from the cord as it
+   arrives, back toward the cord as it leaves. script.js writes the unit
+   vector per region; without it every region falls back to straight up and
+   down, which is where this started. A shared @keyframes can read them
+   because the custom properties resolve per pseudo-element. */
+::view-transition-old(vt-hero), ::view-transition-new(vt-hero) { --wdx: var(--w-hero-x, 0px); --wdy: var(--w-hero-y, 26px); }
+::view-transition-old(vt-side), ::view-transition-new(vt-side) { --wdx: var(--w-side-x, 0px); --wdy: var(--w-side-y, 26px); }
+::view-transition-old(vt-s1),   ::view-transition-new(vt-s1)   { --wdx: var(--w-s1-x, 0px);   --wdy: var(--w-s1-y, 26px); }
+::view-transition-old(vt-s2),   ::view-transition-new(vt-s2)   { --wdx: var(--w-s2-x, 0px);   --wdy: var(--w-s2-y, 26px); }
+::view-transition-old(vt-s3),   ::view-transition-new(vt-s3)   { --wdx: var(--w-s3-x, 0px);   --wdy: var(--w-s3-y, 26px); }
+::view-transition-old(vt-s4),   ::view-transition-new(vt-s4)   { --wdx: var(--w-s4-x, 0px);   --wdy: var(--w-s4-y, 26px); }
+::view-transition-old(vt-foot), ::view-transition-new(vt-foot) { --wdx: var(--w-foot-x, 0px); --wdy: var(--w-foot-y, 26px); }
+
+@keyframes layer-out {
+    from { opacity: 1; transform: translate(0, 0) scale(1); filter: blur(0); }
+    to   { opacity: 0;
+           transform: translate(calc(var(--wdx, 0px) * -0.55), calc(var(--wdy, 26px) * -0.55)) scale(0.98);
+           filter: blur(4px); }
+}
+@keyframes layer-in {
+    from { opacity: 0;
+           transform: translate(var(--wdx, 0px), var(--wdy, 26px)) scale(0.985);
+           filter: blur(6px); }
+    to   { opacity: 1; transform: translate(0, 0) scale(1); filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) { animation: none !important; }
+}
 
 /* ================= hero ================= */
 
@@ -381,6 +653,24 @@ a { color: inherit; }
     margin-bottom: -0.24em;
 }
 .title .word { display: inline-block; will-change: transform; }
+
+/* The same mask, reused for section headings so the whole page has ONE
+   reveal idea instead of a different fade per section. Same descender
+   allowance — these are Abril too, at line-height 1.02. */
+.ln {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.24em;
+    margin-bottom: -0.24em;
+}
+.ln > span { display: block; will-change: transform; }
+
+/* GSAP owns the transform on the magnetic button, so the shared .btn
+   transition must not also be tweening it — a CSS transition on a property
+   something else writes every frame is a fight neither side wins. The press
+   feedback .btn:active gives everyone else is re-done in JS here, because an
+   inline transform beats a stylesheet rule no matter how specific. */
+.magnetic { transition: background 0.22s, color 0.22s, border-color 0.22s; }
 
 .hero-meta {
     display: flex;
@@ -516,6 +806,14 @@ a { color: inherit; }
 #rail.dealt .rc-back,
 #rail.dealt .rc-face { width: var(--rail-card); }
 #rail.dealt .rc-back { display: block; }
+/* The turn is a vertical ROLL, not a flip: one side leaves upward while the
+   other arrives from below, both travelling the way the wheel already moves.
+   Each side clips its own sheet so the half that has rolled out of frame is
+   gone rather than hanging off the card — and because the face sits above the
+   back and only covers the part of the window its sheet is in, the two tile
+   against each other and you see one continuous reel. */
+#rail.dealt .rc-back,
+#rail.dealt .rc-face { overflow: hidden; }
 #rail.dealt .rc-face {
     position: absolute;
     inset: 0 auto 0 0;
@@ -608,7 +906,7 @@ a { color: inherit; }
 }
 #rail.dealt .rail-card.active .rc-back { filter: none; }
 
-@media (min-width: 1100px) {
+@media (min-width: 1280px) {
     #rail { display: block; }
     /* The top bar goes entirely: the rail is the navigation here, and the
        LY mark is duplicated by the rail's Home card. It is kept BELOW this
@@ -619,11 +917,10 @@ a { color: inherit; }
        Without this the rail sits on top of the text from 1100-1280px, where
        the centred 1180px column leaves almost no gutter. Fixed-position
        elements ignore body padding, so #nav is offset separately. */
-    body { padding-left: var(--rail-w); }
-    /* The rail's reserved width pushes the centred column right of the real
-       viewport centre. Balancing part of it back brings the page closer to
-       centre without narrowing the content as much as full symmetry would. */
-    body { padding-right: calc(var(--rail-w) * 0.6); }
+    /* Symmetric, so the content column lands on the true viewport centre.
+       Reserving space only on the rail's side pushed everything right by half
+       the rail width, which read as the whole page being off-centre. */
+    body { padding-left: var(--rail-w); padding-right: var(--rail-w); }
 }
 
 /* ---- cards falling across the whole screen ----------------------------
@@ -645,6 +942,9 @@ a { color: inherit; }
     pointer-events: none;
     will-change: transform;
 }
+/* One container per depth tier. animations.js drags each by a different
+   amount as you scroll, so a hard flick shears the three depths apart. */
+.dtier { position: absolute; inset: 0; will-change: transform; }
 .dcard svg { display: block; width: 100%; height: 100%; }
 .dcard.d-far  { width: 86px;  opacity: 0.045; filter: blur(2.6px); }
 .dcard.d-mid  { width: 140px; opacity: 0.07;  filter: blur(1.2px); }
@@ -714,72 +1014,27 @@ a { color: inherit; }
     color: var(--text-2);
 }
 
-/* ================= the count ================= */
-
-.sec-count { border-top: none; }
-
-.stats {
-    list-style: none;
-    display: grid;
-    /* explicit tracks, not auto-fit: there are exactly six stats, and auto-fit
-       lands on five-plus-one at desktop widths, which leaves a dead cell */
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    margin-top: 2.6rem;
-    background: var(--line);
-    border: 1px solid var(--line);
-}
-.stat {
-    background: var(--bg);
-    padding: clamp(1.5rem, 3.5vw, 2.4rem) clamp(1.2rem, 3vw, 2rem);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    transition: background 0.3s;
-}
-.stat:hover { background: var(--surf-1); }
-.stat-n {
-    font-family: var(--font-display);
-    font-size: clamp(2.4rem, 5.4vw, 4rem);
-    line-height: 1;
-    letter-spacing: -0.02em;
-    color: var(--gold);
-    /* tabular figures stop the count-up from jittering the layout */
-    font-variant-numeric: tabular-nums;
-}
-.stat-l {
-    font-family: var(--font-hud);
-    font-size: 0.74rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-2);
-    line-height: 1.4;
-}
-
-@media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 460px) { .stats { grid-template-columns: 1fr; } }
-
 /* ==========================================================================
-   CARD STOCK — a real face, shared by the trick reveal and the project art.
+   CARD STOCK — the face used by the rail's cards.
    Cream card on a near-black table: the whole point of the palette.
    ========================================================================== */
 
 .rcard-face {
     position: relative;
+    width: 100%;
+    aspect-ratio: 5 / 7;
     background: var(--card-face);
     border-radius: 8px;
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.5) inset,
-        0 24px 60px rgba(0, 0, 0, 0.6);
     display: grid;
     place-items: center;
     overflow: hidden;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.5) inset,
+        0 24px 60px rgba(0, 0, 0, 0.6);
 }
-.rcard-face { aspect-ratio: 5 / 7; width: 100%; }
 
 /* corner indices */
-.rf-ci, .shot-rank {
+.rf-ci {
     position: absolute;
     display: flex;
     flex-direction: column;
@@ -787,16 +1042,14 @@ a { color: inherit; }
     gap: 0.12em;
     font-family: var(--font-hud);
     font-weight: 700;
+    font-size: 1.15rem;
     line-height: 1;
     color: var(--ink);
 }
-.rf-ci.red, .shot-rank.red { color: var(--crimson-ink); }
-.rf-ci { font-size: 1.15rem; }
 .rf-ci .suit-icon { width: 0.8em; height: 0.8em; }
 .rf-ci.top { top: 9px; left: 11px; }
 .rf-ci.bottom { bottom: 9px; right: 11px; transform: rotate(180deg); }
-
-
+.rf-ci.red,
 .rcard-face[data-suit="red"] .rf-ci { color: var(--crimson-ink); }
 
 /* ================= the hand (projects) ================= */
@@ -1139,6 +1392,185 @@ footer p {
     text-transform: uppercase;
     color: var(--text-3);
 }
+
+
+/* ==========================================================================
+   PLAIN MODE — the house lights are on.
+   Pulling the cord adds body.plain: a light, conventional portfolio with
+   every trace of the card theme removed. Project screenshots stay, since
+   those are real work rather than decoration.
+   ========================================================================== */
+
+body.plain {
+    /* a full palette swap rather than a filter, so contrast stays deliberate */
+    --bg:        #F6F5F2;
+    --surf-1:    #FFFFFF;
+    --surf-2:    #EFEEEA;
+    --line:      rgba(20, 20, 26, 0.12);
+    --line-2:    rgba(20, 20, 26, 0.28);
+    --text:      #14141A;
+    --text-2:    #4A4A55;
+    --text-3:    #75757F;
+    --gold:      #1C1C22;      /* the accent becomes ink; no gold on stage */
+    --gold-deep: #35353F;
+    --crimson:   #A3122B;
+    background: var(--bg);
+    color: var(--text);
+    /* the rail is gone, so the page reclaims its full width */
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* everything theatrical goes */
+body.plain #rail,
+body.plain #drift,
+body.plain #dust,
+body.plain .beam,
+body.plain .cue,
+body.plain::before { display: none; }
+
+/* the top bar comes back at every width and becomes the navigation */
+body.plain #nav {
+    /* deliberately no `display` here — the >=1280 rule hides the bar in both
+       modes, so the show and plain views match. Below that breakpoint the base
+       `#nav { display: flex }` brings it back for both. */
+    padding-left: var(--gut);
+    background: rgba(246, 245, 242, 0.85);
+    border-bottom-color: var(--line);
+}
+body.plain #nav.stuck { border-bottom-color: var(--line); }
+body.plain .nav-links { display: flex; }
+body.plain .nav-links a { color: var(--text-2); }
+body.plain .nav-links a:hover,
+body.plain .nav-links a.active { color: var(--text); }
+body.plain .nav-links a::after { background: var(--text); }
+body.plain .nav-cta {
+    background: var(--text);
+    color: var(--bg);
+}
+body.plain .nav-cta:hover { background: var(--crimson); }
+
+/* suits and pips are the theme, not the content */
+body.plain .suit-icon,
+body.plain .pill .dot { display: none; }
+body.plain .kicker,
+body.plain .eyebrow { color: var(--crimson); }
+
+/* hero: same words, plain dress */
+body.plain .title { color: var(--text); }
+body.plain .pill { border-color: var(--line); color: var(--text-2); }
+
+body.plain .btn { color: var(--text); border-color: var(--line-2); }
+body.plain .btn:hover,
+body.plain .btn:focus-visible { background: var(--text); color: var(--bg); border-color: var(--text); }
+body.plain .btn-solid { background: var(--text); color: var(--bg); border-color: var(--text); }
+body.plain .btn-solid:hover,
+body.plain .btn-solid:focus-visible { background: var(--crimson); border-color: var(--crimson); color: #fff; }
+
+/* surfaces */
+body.plain .tr:hover { background: var(--surf-1); }
+body.plain .paper-list li { background: var(--surf-1); border-color: var(--line); }
+body.plain .cite strong { color: var(--crimson); }
+body.plain .badge-live { color: var(--crimson); border-color: rgba(163, 18, 43, 0.4); }
+body.plain .tag { border-color: var(--line); color: var(--text-2); }
+body.plain .tag:hover { border-color: var(--line-2); color: var(--text); }
+body.plain .proj-specs li::before,
+body.plain .tr-body ul li::before { background: var(--crimson); }
+body.plain .tr-when { color: var(--crimson); }
+body.plain .stack dt { color: var(--crimson); }
+
+/* project art: keep the screenshots, drop the stage lighting */
+body.plain .proj-shot {
+    border-color: var(--line);
+    background: var(--surf-1);
+    box-shadow: 0 10px 30px rgba(20, 20, 26, 0.1);
+}
+body.plain .proj:hover .proj-shot {
+    box-shadow: 0 18px 44px rgba(20, 20, 26, 0.16);
+    border-color: var(--line-2);
+}
+
+/* contact stops being a playing card */
+body.plain .contact-card {
+    background: var(--surf-1);
+    border: 1px solid var(--line);
+    box-shadow: 0 14px 40px rgba(20, 20, 26, 0.1);
+    transform: none;
+}
+body.plain .sec-contact:hover .contact-card { transform: translateY(-4px); }
+body.plain .cc-ci { display: none; }
+body.plain .contact-card .kicker { color: var(--crimson); }
+body.plain .contact-card .sec-sub { color: var(--text-2); }
+body.plain .contact-card .btn { color: var(--text); border-color: var(--line-2); }
+body.plain .contact-card .btn-solid { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+
+/* ---- plain mode's own side index -------------------------------------
+   Built by script.js from the rail's sections. Editorial rather than
+   theatrical: numbers, names, a hairline, and a mark on the current one. */
+#index { display: none; }
+body.plain #index {
+    display: none;
+    position: fixed;
+    left: clamp(24px, 4vw, 56px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 850;
+    border-left: 1px solid var(--line);
+    padding-left: 18px;
+}
+.index-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    text-decoration: none;
+    color: var(--text-3);
+    font-family: var(--font-hud);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    position: relative;
+    transition: color 0.25s, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.index-item .ix-num { font-size: 0.58rem; opacity: 0.7; }
+.index-item::before {
+    content: '';
+    position: absolute;
+    left: -19px;
+    top: 50%;
+    width: 1px;
+    height: 0;
+    background: var(--text);
+    transform: translateY(-50%);
+    transition: height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.index-item:hover { color: var(--text-2); transform: translateX(3px); }
+.index-item.active { color: var(--text); }
+.index-item.active::before { height: 100%; }
+
+/* the index owns the left margin, so the page steps in to clear it */
+@media (min-width: 1280px) {
+    body.plain { padding-left: var(--index-w); padding-right: var(--index-w); }
+    body.plain #index { display: block; }
+}
+
+body.plain #progress { background: var(--text); }
+/* the rope goes to ink in plain mode — a gold cord is stage dressing */
+body.plain .cord-back  { stroke: #0E0E12; }
+body.plain .cord-front { stroke: #6A6A78; }
+body.plain .tassel-cap { background: linear-gradient(180deg, #6A6A78, #2A2A33 45%, #14141A); }
+body.plain .tassel-skirt {
+    background: repeating-linear-gradient(90deg,
+        rgba(90, 90, 102, 0.95) 0 1.5px,
+        rgba(30, 30, 38, 0.9) 1.5px 3px);
+}
+body.plain #cord:hover .tassel-cap,
+body.plain #cord:focus-visible .tassel-cap { box-shadow: 0 0 12px rgba(20, 20, 26, 0.45); }
+
+/* the side index IS the navigation in plain mode, so the top bar keeps only
+   the mark and the CTA rather than duplicating every section link */
 
 /* ==========================================================================
    REDUCED MOTION — kill every ambient animation. The page above is already
