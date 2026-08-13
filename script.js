@@ -119,6 +119,11 @@
             // the rail and drift are display:none in plain mode, so every
             // cached trigger position is stale the moment the class flips
             if (window.ScrollTrigger) window.ScrollTrigger.refresh();
+            // Bringing the rail back: hold the cards off the left edge from
+            // inside the transition, so the new view is snapshotted on an
+            // empty column and swap() can deal them in as the wave passes. A
+            // rail that is simply there reads as a panel being toggled.
+            if (!plain && window.railArm) window.railArm();
         }
 
         try { if (localStorage.getItem(KEY) === '1') apply(true); } catch (e) {}
@@ -189,11 +194,31 @@
             });
         }
 
+        /* Deal the rail back in as the wave reaches it.
+           Not on vt.finished: the whole transition runs a second or more once
+           the far regions' delays are counted, and the column would sit empty
+           for all of it. ::view-transition-new renders the new state live, so
+           the cards can arrive underneath the side region's own layer. */
+        function dealWithWave(vt) {
+            if (!window.railDeal) return;
+            const wait = vt && vt.ready;
+            if (!wait) { window.railDeal(0); return; }
+            wait.then(() => {
+                const d = parseFloat(
+                    getComputedStyle(document.documentElement).getPropertyValue('--w-side'));
+                window.railDeal((d || 0.3) + 0.12);
+            }, () => window.railDeal(0));   // skipped transition: just deal
+        }
+
         // The swap is animated with the View Transitions API: the browser
         // snapshots the old and new views so they can be tweened. A bare class
         // change repaints in a single frame, which is the "jump".
         function swap(next) {
-            if (reduce || !document.startViewTransition) { apply(next); return Promise.resolve(); }
+            if (reduce || !document.startViewTransition) {
+                apply(next);
+                if (!next) dealWithWave(null);
+                return Promise.resolve();
+            }
             // anchor the reveal to the cord, so the change reads as caused by
             // the pull rather than arriving from nowhere
             const r = cordEl.getBoundingClientRect();
@@ -206,7 +231,8 @@
 
             let vt;
             try { vt = document.startViewTransition(() => apply(next)); }
-            catch (e) { apply(next); return Promise.resolve(); }
+            catch (e) { apply(next); if (!next) dealWithWave(null); return Promise.resolve(); }
+            if (!next) dealWithWave(vt);
             // A skipped transition (the browser skips whenever the document is
             // hidden) rejects ALL THREE of these. Catching only .finished leaves
             // unhandled rejections that surface as "InvalidStateError:
@@ -220,7 +246,13 @@
             if (busy) return;
             busy = true;
             const next = !document.body.classList.contains('plain');
-            swap(next).then(() => { busy = false; });
+            // Leaving the show, let the run collect back into the deck first.
+            // The transition snapshots the rail the instant it starts, so a
+            // gather run alongside it would never be seen — what the snapshot
+            // has to catch is the packet, not the whole spread shrinking.
+            const lead = (next && window.railGather) ? window.railGather() : 0;
+            const go = () => swap(next).then(() => { busy = false; });
+            if (lead) setTimeout(go, lead); else go();
         }
 
 

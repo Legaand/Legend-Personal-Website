@@ -290,21 +290,50 @@
 
             let current = -1;
 
+            // with nothing active the wheel rests centred on its middle card
+            function centreOf(activeIdx) {
+                return activeIdx >= 0 ? activeIdx : (parts.length - 1) / 2;
+            }
+
+            // where card i belongs when the wheel is at rest
+            function spot(i, activeIdx) {
+                const centre = centreOf(activeIdx);
+                const s = slot(i, centre);
+                const on = i === activeIdx;
+                return {
+                    x: s.x + (on ? 56 : 0),
+                    y: s.y,
+                    rotation: on ? 0 : s.rot,
+                    scale: on ? 1.1 : 1,
+                    yPercent: -50,
+                    zIndex: on ? 40 : 20 - Math.round(Math.abs(i - centre)),
+                    autoAlpha: 1,
+                };
+            }
+
+            /* The squared deck: every card collected onto the front card's
+               spot, offset a hair so the packet has thickness instead of
+               reading as one flat sheet. The whole run fans out of this and
+               collects back into it. */
+            function packed(i, activeIdx) {
+                const centre = centreOf(activeIdx);
+                const front = spot(Math.round(centre), activeIdx);
+                const dist = Math.abs(i - centre);
+                return {
+                    x: front.x - dist * 1.6,
+                    y: front.y - dist * 1.6,
+                    rotation: front.rotation,
+                    scale: front.scale,
+                    yPercent: -50,
+                    zIndex: i === activeIdx ? 40 : 20 - Math.round(dist),
+                };
+            }
+
             function layout(activeIdx, animate) {
-                // with nothing active the wheel rests centred on its middle card
-                const centre = activeIdx >= 0 ? activeIdx : (parts.length - 1) / 2;
+                const centre = centreOf(activeIdx);
                 parts.forEach((p, i) => {
-                    const s = slot(i, centre);
                     const on = i === activeIdx;
-                    const to = {
-                        x: s.x + (on ? 56 : 0),
-                        y: s.y,
-                        rotation: on ? 0 : s.rot,
-                        scale: on ? 1.1 : 1,
-                        yPercent: -50,
-                        zIndex: on ? 40 : 20 - Math.round(Math.abs(i - centre)),
-                        autoAlpha: 1,
-                    };
+                    const to = spot(i, activeIdx);
                     if (animate) {
                         /* The whole wheel does not snap round as one rigid
                            object: each card starts a beat after the one nearer
@@ -312,20 +341,20 @@
                            when you square it up. The card being turned to gets
                            the overshoot; the rest just glide. */
                         const lag = Math.abs(i - centre) * 0.035;
-                        gsap.to(p.card, Object.assign(to, {
+                        gsap.to(p.card, Object.assign({}, to, {
                             duration: on ? 0.85 : 0.72,
                             delay: on ? 0 : lag,
                             ease: on ? SETTLE : GLIDE,
                         }));
                         if (p.num) {
                             gsap.to(p.num, {
-                                y: s.y, yPercent: -50, duration: 0.72,
+                                y: to.y, yPercent: -50, duration: 0.72,
                                 delay: lag, ease: GLIDE,
                             });
                         }
                     } else {
                         gsap.set(p.card, to);
-                        if (p.num) gsap.set(p.num, { y: s.y, yPercent: -50 });
+                        if (p.num) gsap.set(p.num, { y: to.y, yPercent: -50 });
                     }
                 });
             }
@@ -353,6 +382,9 @@
                 const faceSheet = p.face.firstElementChild;
                 const backSheet = p.back && p.back.firstElementChild;
                 gsap.killTweensOf([p.back, p.face, p.label, faceSheet, backSheet]);
+                // a flip interrupted part-way leaves a side squashed, and the
+                // roll never writes scaleX, so it would stay that way
+                gsap.set([p.back, p.face], { scaleX: 1 });
 
                 // dir -1 is travelling up, which is what scrolling DOWN does to
                 // the wheel. 105 rather than 100 so a rounding difference
@@ -387,22 +419,158 @@
                 }
             }
 
-            // deal in: the wheel swings up from off the left edge, card by card
-            parts.forEach((p) => {
-                gsap.set(p.card, { autoAlpha: 0, x: -260, y: 0, rotation: -40, yPercent: -50 });
-                gsap.set(p.face, { autoAlpha: 0 });
-                gsap.set(p.back, { autoAlpha: 1 });
-                gsap.set(p.label, { autoAlpha: 0 });
-                // both sheets start at home; the roll moves them, not their sides
-                if (p.face.firstElementChild) gsap.set(p.face.firstElementChild, { yPercent: 0 });
-                if (p.back && p.back.firstElementChild) gsap.set(p.back.firstElementChild, { yPercent: 0 });
-                if (p.num) gsap.set(p.num, { autoAlpha: 0, yPercent: -50 });
-            });
-            gsap.delayedCall(0.35, () => {
-                layout(current, true);
-                gsap.to(parts.map((p) => p.num).filter(Boolean),
-                        { autoAlpha: 1, duration: 0.5, stagger: 0.04 });
-            });
+            /* The fan's turn is a FLIP, and it is a different move from the
+               roll above on purpose.
+
+               The roll exists to travel WITH the wheel — it only reads as a
+               card because something is carrying it. At the end of the fan
+               nothing is moving, so a strip sliding through a window reads as
+               exactly that. A card sitting still should turn over.
+
+               Still strictly 2D, for the same reason the roll is: any 3D
+               transform on a card makes Chromium paint it above other fixed
+               UI regardless of z-index. It does not need to be 3D — x-scale
+               through zero is genuinely what a turning card does, since its
+               apparent width is cos(theta). That is why the halves are eased
+               `sine.in` then `sine.out` rather than linear: it makes the card
+               turn at a constant rate instead of hanging at the edges, which
+               is what made the old scaleX flip read as a blink. */
+            const FLIP = 0.54;
+
+            function flip(p) {
+                if (!p || !p.face) return;
+                if (p.num) p.num.classList.add('on');
+
+                const faceSheet = p.face.firstElementChild;
+                const backSheet = p.back && p.back.firstElementChild;
+                gsap.killTweensOf([p.back, p.face, p.label, faceSheet, backSheet]);
+                // the flip turns the SIDES; the roll's sheets stay home
+                gsap.set([faceSheet, backSheet].filter(Boolean), { yPercent: 0 });
+
+                const H = FLIP / 2;
+                gsap.timeline()
+                    .set(p.back, { autoAlpha: 1, scaleX: 1 }, 0)
+                    .set(p.face, { autoAlpha: 0, scaleX: 0 }, 0)
+                    .to(p.back, { scaleX: 0, duration: H, ease: 'sine.in' }, 0)
+                    // edge-on: the sides swap over
+                    .set(p.back, { autoAlpha: 0 }, H)
+                    .set(p.face, { autoAlpha: 1 }, H)
+                    .to(p.face, { scaleX: 1, duration: H, ease: 'sine.out' }, H)
+                    // leave the back square, or the next roll brings back a sliver
+                    .set(p.back, { scaleX: 1 }, FLIP)
+                    .set(p.label, { x: -8 }, H)
+                    .to(p.label, { autoAlpha: 1, x: 0, duration: 0.4, ease: GLIDE }, H + 0.08);
+            }
+
+            /* The fan.
+
+               One card becomes five: the packet arrives squared up on the
+               front card's spot and then spreads along the arc, each card a
+               beat behind the one nearer the front. Split into arm/play
+               because the cord replays it — the rail is display:none in
+               plain mode, so coming back it would otherwise be there fully
+               assembled, which reads as a panel being toggled rather than a
+               deck being spread.
+
+               It replaced a deal from off the left edge. That worked at boot
+               but the whole run travelling in at once had nothing to do with
+               cards; the spread is the move the rail is already making every
+               time you scroll, just done all at once. */
+            const cardEls = parts.map((p) => p.card);
+            const numEls = parts.map((p) => p.num).filter(Boolean);
+            const labelEls = parts.map((p) => p.label).filter(Boolean);
+            let pending = null;
+
+            function arm() {
+                // a fan still waiting on its delay would fire into the armed
+                // state and undo it
+                if (pending) { pending.kill(); pending = null; }
+                parts.forEach((p, i) => {
+                    gsap.killTweensOf([p.card, p.back, p.face, p.label, p.num,
+                                       p.face.firstElementChild,
+                                       p.back && p.back.firstElementChild]);
+                    gsap.set(p.card, Object.assign(packed(i, current), { autoAlpha: 0 }));
+                    // scaleX: a flip cut short by the cord leaves a side squashed
+                    gsap.set(p.face, { autoAlpha: 0, scaleX: 1 });
+                    gsap.set(p.back, { autoAlpha: 1, scaleX: 1 });
+                    gsap.set(p.label, { autoAlpha: 0 });
+                    // both sheets start at home; the roll moves them, not their sides
+                    if (p.face.firstElementChild) gsap.set(p.face.firstElementChild, { yPercent: 0 });
+                    if (p.back && p.back.firstElementChild) gsap.set(p.back.firstElementChild, { yPercent: 0 });
+                    if (p.num) gsap.set(p.num, { autoAlpha: 0, y: packed(i, current).y, yPercent: -50 });
+                });
+            }
+
+            const FAN = 0.2;               // how long the packet takes to appear
+            /* The flip waits for the spread to be completely finished, and
+               then some. Two things happening to the same card at once reads
+               as neither, and "nearly settled" is not settled: the slowest
+               card's tween runs 0.72s plus up to 0.14s of lag, and the front
+               card's SETTLE overshoot takes 0.85s to come back to rest. This
+               clears all of that and leaves a beat of stillness, so the flip
+               is unmistakably its own move. */
+            const TURN_IN = 1.1;
+
+            function play(delay) {
+                if (pending) pending.kill();
+                pending = gsap.timeline({ delay: delay || 0, onComplete() { pending = null; } })
+                    // the squared packet reads as a single card...
+                    .to(cardEls, { autoAlpha: 1, duration: FAN, ease: 'none' }, 0)
+                    // ...which then spreads into the run...
+                    .call(() => layout(current, true), null, FAN)
+                    .to(numEls, { autoAlpha: 1, duration: 0.5, stagger: 0.04 }, FAN)
+                    // ...and only once it has settled, the top card turns
+                    // over. arm() left every card face-down, so the section
+                    // you are standing in has to be turned back to.
+                    .call(() => {
+                        if (current >= 0 && parts[current]) flip(parts[current]);
+                    }, null, FAN + TURN_IN);
+            }
+
+            /* The inverse, run BEFORE the page turns over: the run collects
+               back into the packet, so what the transition snapshots is a
+               single card rather than the whole spread. Returns how long to
+               wait in ms. */
+            const GATHER = 0.3;
+            const SCOOP = 0.06;            // head start for the far end of the run
+
+            function gather() {
+                if (pending) { pending.kill(); pending = null; }
+                const centre = centreOf(current);
+                const far = Math.max(centre, parts.length - 1 - centre) || 1;
+                parts.forEach((p, i) => {
+                    gsap.killTweensOf(p.card);
+                    gsap.to(p.card, Object.assign(packed(i, current), {
+                        duration: GATHER,
+                        // the far cards move first, so the run closes inward
+                        // the way a spread does when you scoop it up
+                        delay: SCOOP * (1 - Math.abs(i - centre) / far),
+                        ease: 'power2.inOut',
+                    }));
+                });
+                gsap.to(numEls, { autoAlpha: 0, duration: GATHER * 0.7 });
+                gsap.to(labelEls, { autoAlpha: 0, duration: GATHER * 0.5 });
+                return (GATHER + SCOOP) * 1000;
+            }
+
+            /* script.js runs first and its scroll handler has already marked a
+               card active by now. Adopt it BEFORE arming — the packet has to
+               be squared on the card the fan will open around, and the fan is
+               the entrance, so calling railSetActive here instead would turn
+               to that card as if it had been scrolled to and skip the packet
+               entirely. */
+            const pre = items.findIndex((c) => c.classList.contains('active'));
+            if (pre >= 0) current = pre;
+
+            arm();
+            play(0.35);
+
+            // called by script.js around the cord swap: armed inside the view
+            // transition so nothing is snapshotted, then fanned as the wave
+            // passes; gathered up front on the way out
+            window.railArm = arm;
+            window.railDeal = function (delay) { play(delay || 0); };
+            window.railGather = gather;
 
             // called by script.js from the scroll handler
             window.railSetActive = function (i) {
@@ -418,11 +586,6 @@
                 if (prev >= 0 && parts[prev]) turn(parts[prev], false, dir);
                 if (i >= 0 && parts[i]) turn(parts[i], true, dir);
             };
-
-            // script.js runs first and its observer may already have marked a
-            // card active before this file defined railSetActive — sync up
-            const pre = items.findIndex((c) => c.classList.contains('active'));
-            if (pre >= 0) window.railSetActive(pre);
 
             window.addEventListener('resize', () => layout(current, false));
         })();

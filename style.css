@@ -476,9 +476,13 @@ body.plain #cord:hover::after { color: var(--text); }
    each its own group, which the browser animates independently — so the
    change cascades through the page instead of arriving all at once.
 
-   The rail and the plain-mode index deliberately share the name `side`: only
-   one of them is ever rendered, so the browser treats them as the same
-   element and MORPHS one into the other rather than crossfading. */
+   The rail and the plain-mode index used to SHARE a name, so that the browser
+   would treat them as one element and morph one into the other. They no
+   longer do. `#rail.dealt` is a full-height 100vh column and `#index` is a
+   small centred list, so the "morph" was the live card wheel being squashed
+   into a text panel's box and back — read as the rail shrinking on the way
+   in and on the way out. Each has its own name and its own box now, and the
+   rail's entrance and exit are the cards themselves (see below). */
 .hero-inner { view-transition-name: vt-hero; }
 /* The name is the anchor the change happens around — it holds its position
    and only its colour resolves, so the page reads as the same site changing
@@ -493,7 +497,8 @@ body.plain #cord:hover::after { color: var(--text); }
 ::view-transition-new(vt-name) { animation: anchor-in 0.55s 0.22s ease both; }
 @keyframes anchor-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes anchor-in  { from { opacity: 0; } to { opacity: 1; } }
-#rail, #index { view-transition-name: vt-side; }
+#rail    { view-transition-name: vt-side; }
+#index   { view-transition-name: vt-index; }
 #work    { view-transition-name: vt-s1; }
 #track   { view-transition-name: vt-s2; }
 #stack   { view-transition-name: vt-s3; }
@@ -518,12 +523,21 @@ footer   { view-transition-name: vt-foot; }
 
    The fallbacks are the old fixed cascade, so this degrades to the previous
    behaviour if the JS never runs. */
-::view-transition-group(vt-side) {
-    animation-duration: 0.85s;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-::view-transition-old(vt-side) { animation: layer-out 0.4s  var(--w-side, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
-::view-transition-new(vt-side) { animation: layer-in  0.6s  var(--w-side, 0.30s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+/* The rail is the one region that animates itself: the deck fans out along
+   the arc as it arrives and collects back into a packet before it goes, both
+   in animations.js. So its snapshots only have to get out of the way — the
+   generic layer treatment scaled and blurred the cards on top of their own
+   motion, which is what made the fan arrive small and soft. The arriving
+   rail is left completely alone; it is armed empty inside the transition
+   callback, so there is nothing to see until the cards deal. */
+::view-transition-old(vt-side) { animation: side-out 0.3s var(--w-side, 0s) ease both; }
+::view-transition-new(vt-side) { animation: none; }
+@keyframes side-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* The plain-mode index has no motion of its own, so it keeps the shared
+   layer treatment, timed off the same side wave. */
+::view-transition-old(vt-index) { animation: layer-out 0.4s  var(--w-side, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-new(vt-index) { animation: layer-in  0.6s  var(--w-side, 0.30s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 ::view-transition-old(vt-hero) { animation: layer-out 0.34s var(--w-hero, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-new(vt-hero) { animation: layer-in  0.62s var(--w-hero, 0.12s) cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -546,7 +560,7 @@ footer   { view-transition-name: vt-foot; }
    down, which is where this started. A shared @keyframes can read them
    because the custom properties resolve per pseudo-element. */
 ::view-transition-old(vt-hero), ::view-transition-new(vt-hero) { --wdx: var(--w-hero-x, 0px); --wdy: var(--w-hero-y, 26px); }
-::view-transition-old(vt-side), ::view-transition-new(vt-side) { --wdx: var(--w-side-x, 0px); --wdy: var(--w-side-y, 26px); }
+::view-transition-old(vt-index), ::view-transition-new(vt-index) { --wdx: var(--w-side-x, 0px); --wdy: var(--w-side-y, 26px); }
 ::view-transition-old(vt-s1),   ::view-transition-new(vt-s1)   { --wdx: var(--w-s1-x, 0px);   --wdy: var(--w-s1-y, 26px); }
 ::view-transition-old(vt-s2),   ::view-transition-new(vt-s2)   { --wdx: var(--w-s2-x, 0px);   --wdy: var(--w-s2-y, 26px); }
 ::view-transition-old(vt-s3),   ::view-transition-new(vt-s3)   { --wdx: var(--w-s3-x, 0px);   --wdy: var(--w-s3-y, 26px); }
