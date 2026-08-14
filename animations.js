@@ -361,106 +361,62 @@
 
             /* The turn only swaps the sides; the wheel handles every position.
 
-               It is a vertical ROLL, not a flip. The old squash-through-zero
-               scaleX read as the card blinking out and a different one
-               blinking in — an appear/disappear, unrelated to anything else on
-               screen. Here the two sides travel together in the direction the
-               wheel is already turning: the outgoing sheet rolls out one way
-               while the incoming sheet arrives from the other, so the sides
-               tile against each other and the card reads as one reel moving
-               with the scroll.
+               It is a real card TURN-OVER: the card narrows to edge-on, the
+               sides swap there, and the new side opens back out. The vertical
+               reel ROLL this used to be was rejected — travelling with the
+               wheel made the card read as a strip of film sliding through a
+               window rather than a card being turned over.
 
                Still strictly 2D. The rail is fixed UI and ANY 3D transform on
                a card makes Chromium paint it above other fixed UI regardless
-               of z-index — here that would put cards over the nav. */
-            const ROLL = 0.52;
+               of z-index — here that would put cards over the nav. It does not
+               need to be 3D: x-scale through zero is genuinely what a turning
+               card does, since its apparent width is cos(theta). The halves
+               are eased `sine.in` then `sine.out` so the card turns at a
+               constant rate instead of hanging at the edges, which is what
+               made the old linear scaleX flip read as a blink. */
+            const FLIP = 0.54;
 
-            function turn(p, on, dir) {
+            /* Both the scroll turn and the fan's turn are this one move; `on`
+               says which way round (face-up or back to face-down). */
+            function turnOver(p, on) {
                 if (!p || !p.face) return;
                 if (p.num) p.num.classList.toggle('on', on);
 
                 const faceSheet = p.face.firstElementChild;
                 const backSheet = p.back && p.back.firstElementChild;
                 gsap.killTweensOf([p.back, p.face, p.label, faceSheet, backSheet]);
-                // a flip interrupted part-way leaves a side squashed, and the
-                // roll never writes scaleX, so it would stay that way
-                gsap.set([p.back, p.face], { scaleX: 1 });
+                // the turn moves the SIDES; the sheets inside them stay home
+                gsap.set([faceSheet, backSheet].filter(Boolean), { yPercent: 0 });
 
-                // dir -1 is travelling up, which is what scrolling DOWN does to
-                // the wheel. 105 rather than 100 so a rounding difference
-                // between the sheet and its window can never leave a sliver.
-                const d = dir < 0 ? -1 : 1;
-                const out = 105 * d;          // where the leaving sheet goes
-                const from = -105 * d;        // where the arriving sheet starts
+                const leaving = on ? p.back : p.face;
+                const arriving = on ? p.face : p.back;
 
-                const leaving = on ? backSheet : faceSheet;
-                const arriving = on ? faceSheet : backSheet;
-                const leavingSide = on ? p.back : p.face;
-                const arrivingSide = on ? p.face : p.back;
-
+                const H = FLIP / 2;
                 const tl = gsap.timeline();
-                // both sides are on screen for the whole roll; only at the end
-                // does the one that left get put away
-                tl.set(arrivingSide, { autoAlpha: 1 }, 0)
-                  .set(arriving, { yPercent: from }, 0)
-                  .to(arriving, { yPercent: 0, duration: ROLL, ease: GLIDE }, 0)
-                  .set(leavingSide, { autoAlpha: 0 }, ROLL)
-                  // park the sheet back at home so the next roll starts clean
-                  .set(leaving, { yPercent: 0 }, ROLL);
-                if (leaving) tl.to(leaving, { yPercent: out, duration: ROLL, ease: GLIDE }, 0);
+                tl.set(leaving, { autoAlpha: 1, scaleX: 1 }, 0)
+                  .set(arriving, { autoAlpha: 0, scaleX: 0 }, 0)
+                  .to(leaving, { scaleX: 0, duration: H, ease: 'sine.in' }, 0)
+                  // edge-on: the sides swap over
+                  .set(leaving, { autoAlpha: 0 }, H)
+                  .set(arriving, { autoAlpha: 1 }, H)
+                  .to(arriving, { scaleX: 1, duration: H, ease: 'sine.out' }, H)
+                  // leave the hidden side square, or the next turn brings back
+                  // a sliver of a squashed card
+                  .set(leaving, { scaleX: 1 }, FLIP);
 
                 if (on) {
                     // the label is parked at autoAlpha 0 by the deal-in, so
                     // this has to be a `to` — a from() would animate 0 → 0
-                    tl.set(p.label, { x: -8 }, 0.16)
-                      .to(p.label, { autoAlpha: 1, x: 0, duration: 0.4, ease: GLIDE }, 0.18);
+                    tl.set(p.label, { x: -8 }, H)
+                      .to(p.label, { autoAlpha: 1, x: 0, duration: 0.4, ease: GLIDE }, H + 0.08);
                 } else {
                     tl.to(p.label, { autoAlpha: 0, duration: 0.18, ease: 'power2.in' }, 0);
                 }
             }
 
-            /* The fan's turn is a FLIP, and it is a different move from the
-               roll above on purpose.
-
-               The roll exists to travel WITH the wheel — it only reads as a
-               card because something is carrying it. At the end of the fan
-               nothing is moving, so a strip sliding through a window reads as
-               exactly that. A card sitting still should turn over.
-
-               Still strictly 2D, for the same reason the roll is: any 3D
-               transform on a card makes Chromium paint it above other fixed
-               UI regardless of z-index. It does not need to be 3D — x-scale
-               through zero is genuinely what a turning card does, since its
-               apparent width is cos(theta). That is why the halves are eased
-               `sine.in` then `sine.out` rather than linear: it makes the card
-               turn at a constant rate instead of hanging at the edges, which
-               is what made the old scaleX flip read as a blink. */
-            const FLIP = 0.54;
-
-            function flip(p) {
-                if (!p || !p.face) return;
-                if (p.num) p.num.classList.add('on');
-
-                const faceSheet = p.face.firstElementChild;
-                const backSheet = p.back && p.back.firstElementChild;
-                gsap.killTweensOf([p.back, p.face, p.label, faceSheet, backSheet]);
-                // the flip turns the SIDES; the roll's sheets stay home
-                gsap.set([faceSheet, backSheet].filter(Boolean), { yPercent: 0 });
-
-                const H = FLIP / 2;
-                gsap.timeline()
-                    .set(p.back, { autoAlpha: 1, scaleX: 1 }, 0)
-                    .set(p.face, { autoAlpha: 0, scaleX: 0 }, 0)
-                    .to(p.back, { scaleX: 0, duration: H, ease: 'sine.in' }, 0)
-                    // edge-on: the sides swap over
-                    .set(p.back, { autoAlpha: 0 }, H)
-                    .set(p.face, { autoAlpha: 1 }, H)
-                    .to(p.face, { scaleX: 1, duration: H, ease: 'sine.out' }, H)
-                    // leave the back square, or the next roll brings back a sliver
-                    .set(p.back, { scaleX: 1 }, FLIP)
-                    .set(p.label, { x: -8 }, H)
-                    .to(p.label, { autoAlpha: 1, x: 0, duration: 0.4, ease: GLIDE }, H + 0.08);
-            }
+            function turn(p, on) { turnOver(p, on); }
+            function flip(p) { turnOver(p, true); }
 
             /* The fan.
 
@@ -577,14 +533,9 @@
                 if (i === current) return;
                 const prev = current;
                 current = i;
-                /* Which way the reel rolls. Scrolling DOWN moves to a higher
-                   index, and a higher index sits lower on the arc, so that card
-                   swings UP to reach the front — the roll has to travel the
-                   same way or the card contradicts the wheel carrying it. */
-                const dir = (prev < 0 || i > prev) ? -1 : 1;
                 layout(i, true);                   // the whole wheel turns
-                if (prev >= 0 && parts[prev]) turn(parts[prev], false, dir);
-                if (i >= 0 && parts[i]) turn(parts[i], true, dir);
+                if (prev >= 0 && parts[prev]) turn(parts[prev], false);
+                if (i >= 0 && parts[i]) turn(parts[i], true);
             };
 
             window.addEventListener('resize', () => layout(current, false));
