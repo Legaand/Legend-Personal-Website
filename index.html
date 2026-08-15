@@ -173,6 +173,7 @@
             <a href="#track">Experience</a>
             <a href="#work">Projects</a>
             <a href="#stack">Skills</a>
+            <a href="#papers">Publications</a>
             <a href="#other">Other</a>
         </div>
         <a class="nav-cta" href="#contact">Get in touch</a>
@@ -246,7 +247,7 @@
                 </span>
                 <span class="rail-label">Skills</span>
             </a>
-            <a class="rail-card" href="#other" data-section="other">
+            <a class="rail-card" href="#papers" data-section="papers">
                 <span class="rail-num" aria-hidden="true">05</span>
                 <span class="rc-back"><svg><use href="#card-back"/></svg></span>
                 <span class="rc-face">
@@ -262,9 +263,9 @@
                         <span class="rf-ci bottom red">5<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
                     </span>
                 </span>
-                <span class="rail-label">Other</span>
+                <span class="rail-label">Publications</span>
             </a>
-            <a class="rail-card" href="#contact" data-section="contact">
+            <a class="rail-card" href="#other" data-section="other">
                 <span class="rail-num" aria-hidden="true">06</span>
                 <span class="rc-back"><svg><use href="#card-back"/></svg></span>
                 <span class="rc-face">
@@ -279,6 +280,26 @@
                             <svg class="pip" style="left:73%;top:82%"><use href="#suit-heart"/></svg>
                         </span>
                         <span class="rf-ci bottom red">6<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Other</span>
+            </a>
+            <a class="rail-card" href="#contact" data-section="contact">
+                <span class="rail-num" aria-hidden="true">07</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <span class="rf-ci top red">7<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip" style="left:27%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:50%;top:34%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:27%;top:50%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:50%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:27%;top:82%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:82%"><use href="#suit-heart"/></svg>
+                        </span>
+                        <span class="rf-ci bottom red">7<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
                     </span>
                 </span>
                 <span class="rail-label">Contact</span>
@@ -527,9 +548,34 @@
     </section>
 
 
+    <!-- ================= PUBLICATIONS =================
+         The papers stand on their own — they were buried at the foot of #other,
+         where a reader scanning for them had to read past teaching and study. -->
+    <section id="papers" class="sec">
+        <div class="wrap">
+            <header class="sec-head">
+                <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-diamond"/></svg>Publications</p>
+                <h2>Papers I’ve published.</h2>
+            </header>
+
+            <ol class="paper-list">
+                <li>
+                    <p class="cite">Tang, Y., Li, Z., Yu, J., &amp; <strong>Yang, L.</strong> (2025). <em>A Simple Approach of Chinese Poetry Generation Using Pre-trained LLMs.</em> 106–112.</p>
+                    <p class="doi">doi:10.1145/3726101.3726121</p>
+                    <p class="tr-note">Wrote the preprocessing and consistency tooling; fine-tuned with LLaMA-Factory for poetry generation.</p>
+                </li>
+                <li>
+                    <p class="cite"><strong>Yang, L.</strong> (2024). <em>Resilience enhancement for interdependent power systems by AI-assisted disaster response.</em> Applied and Computational Engineering, 95, 216–229.</p>
+                    <p class="doi">doi:10.54254/2755-2721/95/20241640</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+
     <!-- ================= OTHER =================
-         The mixed bag: research and the papers that came out of it, teaching,
-         and where I studied. -->
+         The mixed bag: research, teaching, and where I studied. The papers it
+         produced now have their own section above. -->
     <section id="other" class="sec">
         <div class="wrap">
             <header class="sec-head">
@@ -570,21 +616,6 @@
                     </div>
                 </li>
             </ol>
-
-            <div class="papers">
-                <p class="kicker sm"><svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-diamond"/></svg>Published</p>
-                <ol class="paper-list">
-                    <li>
-                        <p class="cite">Tang, Y., Li, Z., Yu, J., &amp; <strong>Yang, L.</strong> (2025). <em>A Simple Approach of Chinese Poetry Generation Using Pre-trained LLMs.</em> 106–112.</p>
-                        <p class="doi">doi:10.1145/3726101.3726121</p>
-                        <p class="tr-note">Wrote the preprocessing and consistency tooling; fine-tuned with LLaMA-Factory for poetry generation.</p>
-                    </li>
-                    <li>
-                        <p class="cite"><strong>Yang, L.</strong> (2024). <em>Resilience enhancement for interdependent power systems by AI-assisted disaster response.</em> Applied and Computational Engineering, 95, 216–229.</p>
-                        <p class="doi">doi:10.54254/2755-2721/95/20241640</p>
-                    </li>
-                </ol>
-            </div>
         </div>
     </section>
 

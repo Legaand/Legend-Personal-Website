@@ -143,6 +143,7 @@
             ['s3',   '#stack'],
             ['s4',   '#contact'],
             ['s5',   '#other'],
+            ['s6',   '#papers'],
             ['foot', 'footer'],
         ];
 

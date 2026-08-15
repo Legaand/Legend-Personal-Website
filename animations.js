@@ -268,8 +268,11 @@
             // a card that far round sits R*sin(spread) px off centre. Six cards
             // at the old 11° reached 55° — ~508px — which pushed the far card
             // off the bottom whenever the run's other end was active, so a
-            // destination could be unreachable. 9° holds the five-card spread.
-            const STEP = 9;
+            // destination could be unreachable. Hold the total spread at 45°
+            // (~438px, the figure that worked) however many cards there are,
+            // capped at 9° so a short run never fans out absurdly wide.
+            const SPREAD = 45;
+            const STEP = Math.min(9, SPREAD / Math.max(1, items.length - 1));
             const rad = (d) => (d * Math.PI) / 180;
 
             const parts = items.map((card) => ({

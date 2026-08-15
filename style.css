@@ -506,6 +506,7 @@ body.plain #cord:hover::after { color: var(--text); }
 #work    { view-transition-name: vt-s1; }
 #track   { view-transition-name: vt-s2; }
 #stack   { view-transition-name: vt-s3; }
+#papers  { view-transition-name: vt-s6; }
 #other   { view-transition-name: vt-s5; }
 #contact { view-transition-name: vt-s4; }
 footer   { view-transition-name: vt-foot; }
@@ -552,6 +553,7 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-old(vt-s3)   { animation: layer-out 0.34s var(--w-s3, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-s4)   { animation: layer-out 0.34s var(--w-s4, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-s5)   { animation: layer-out 0.34s var(--w-s5, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-old(vt-s6)   { animation: layer-out 0.34s var(--w-s6, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-foot) { animation: layer-out 0.34s var(--w-foot, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 
 ::view-transition-new(vt-s1)   { animation: layer-in  0.62s var(--w-s1, 0.20s) cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -559,6 +561,7 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-new(vt-s3)   { animation: layer-in  0.62s var(--w-s3, 0.34s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-s4)   { animation: layer-in  0.62s var(--w-s4, 0.41s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-s5)   { animation: layer-in  0.62s var(--w-s5, 0.44s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+::view-transition-new(vt-s6)   { animation: layer-in  0.62s var(--w-s6, 0.44s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-foot) { animation: layer-in  0.62s var(--w-foot, 0.48s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Each region also moves along its OWN axis: outward from the cord as it
@@ -573,6 +576,7 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-old(vt-s3),   ::view-transition-new(vt-s3)   { --wdx: var(--w-s3-x, 0px);   --wdy: var(--w-s3-y, 26px); }
 ::view-transition-old(vt-s4),   ::view-transition-new(vt-s4)   { --wdx: var(--w-s4-x, 0px);   --wdy: var(--w-s4-y, 26px); }
 ::view-transition-old(vt-s5),   ::view-transition-new(vt-s5)   { --wdx: var(--w-s5-x, 0px);   --wdy: var(--w-s5-y, 26px); }
+::view-transition-old(vt-s6),   ::view-transition-new(vt-s6)   { --wdx: var(--w-s6-x, 0px);   --wdy: var(--w-s6-y, 26px); }
 ::view-transition-old(vt-foot), ::view-transition-new(vt-foot) { --wdx: var(--w-foot-x, 0px); --wdy: var(--w-foot-y, 26px); }
 
 @keyframes layer-out {
@@ -1282,7 +1286,6 @@ footer   { view-transition-name: vt-foot; }
 }
 
 /* publications */
-.papers { margin-top: clamp(3rem, 7vw, 5rem); }
 .paper-list {
     list-style: none;
     display: grid;
