@@ -725,7 +725,7 @@
     // so the browser paints the frame at 0.1s as the preview. Arming hangs a
     // play overlay on top of that still; click reveals controls and plays.
     // No-JS skips this and the video stays a visible player.
-    document.querySelectorAll('.reel:not(.reel-ig)').forEach((reel) => {
+    document.querySelectorAll('.reel').forEach((reel) => {
         const video = reel.querySelector('.reel-video');
         const btn = reel.querySelector('.reel-play');
         if (!video || !btn) return;

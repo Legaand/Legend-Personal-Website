@@ -673,8 +673,10 @@
          on top of it. Do not switch these to autoplay — the promo is ~12MB
          with its moov atom at the end, and that would download on every visit.
 
-         The Instagram reel is an iframe on their /embed URL, not a link and
-         not their embed.js — one third-party frame, no extra script. -->
+         All four are local now. The fourth was an Instagram iframe on their
+         /embed URL; the reel is public and the shortcode was right, but
+         Instagram refuses to serve that one through any embed endpoint, so
+         the tile only ever rendered "this link may be broken". -->
     <section id="magic" class="sec sec-magic">
         <div class="wrap">
             <header class="sec-head">
@@ -682,6 +684,13 @@
                 <p class="sec-sub">I perform close-up and stage magic.</p>
             </header>
 
+            <!-- The clips belong to the show. In the plain view they are
+                 hidden and `.magic-veil` takes their place, pointing at the
+                 cord — the one thing on the page that can bring them back.
+                 The veil is absolutely positioned INSIDE the stage, so the
+                 grid keeps reserving its own height in both modes and the
+                 swap has no box difference to animate. -->
+            <div class="magic-stage">
             <ul class="magic-set">
                 <li class="mg mg-promo">
                     <figure class="reel reel-tall">
@@ -717,14 +726,17 @@
                         <p>So fancy</p>
                     </div>
                 </li>
-                <li class="mg mg-ig">
-                    <figure class="reel reel-ig">
-                        <iframe class="reel-embed"
-                                src="https://www.instagram.com/reel/DJ3gWhMOvEo/embed"
-                                title="Instagram reel — a classic trick"
-                                loading="lazy"
-                                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                                allowfullscreen></iframe>
+                <li class="mg mg-classic">
+                    <figure class="reel reel-tall">
+                        <button type="button" class="reel-play" aria-label="Play a classic trick">
+                            <span class="reel-play-mark" aria-hidden="true"></span>
+                            <span class="reel-play-label">Play</span>
+                        </button>
+                        <video class="reel-video" playsinline preload="metadata"
+                               src="media/classic-trick.mp4#t=0.1">
+                            Your browser can't play this video.
+                            <a href="media/classic-trick.mp4">Download it instead</a>.
+                        </video>
                     </figure>
                     <div class="mg-cap">
                         <h3>A classic trick</h3>
@@ -749,6 +761,13 @@
                     </div>
                 </li>
             </ul>
+
+                <div class="magic-veil">
+                    <p class="veil-line">Wrong reality.</p>
+                    <p class="veil-sub">The performances only exist in the other one.</p>
+                    <p class="veil-cue"><span aria-hidden="true">&#8599;</span> Pull the rope, top right</p>
+                </div>
+            </div>
         </div>
     </section>
 
