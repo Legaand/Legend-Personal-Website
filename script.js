@@ -80,7 +80,6 @@
     // with no GSAP and under reduced motion — only the flourish is motion.
     (function cord() {
         const cordEl = document.getElementById('cord');
-        const swing = cordEl && cordEl.querySelector('.cord-swing');
         if (!cordEl) return;
         cordEl.hidden = false;   // hidden in markup so no-JS never sees a dead control
 
@@ -143,6 +142,7 @@
             ['s2',   '#track'],
             ['s3',   '#stack'],
             ['s4',   '#contact'],
+            ['s5',   '#other'],
             ['foot', 'footer'],
         ];
 
@@ -264,110 +264,191 @@
         const paths = cordEl.querySelectorAll('.cord-hit, .cord-back, .cord-front');
         const tassel = cordEl.querySelector('.cord-tassel');
         const ANCHOR_X = 100, REST_LEN = 150;
+        const MAX_LEN = REST_LEN + 96;   // how far it can be hauled down
+        const HOVER_R = 150;             // how close the pointer has to pass to disturb it
 
-        /* Draw the rope from the bracket to the tassel as a quadratic curve.
-           The control point lags behind the swing, so the cord bows the way a
-           real one does instead of staying a rigid line — and because the path
-           always starts at the anchor, it can never detach from its mount. */
-        function draw(drop, sway) {
-            const len = REST_LEN + drop;
-            const rad = sway * Math.PI / 180;
-            const tipX = ANCHOR_X + Math.sin(rad) * len;
-            const tipY = Math.cos(rad) * len;
-            // control point sits partway down, pushed against the direction of
-            // travel — that lag is what makes it read as rope rather than wire
-            const bow = -sway * 0.85;
-            const cx = ANCHOR_X + Math.sin(rad) * len * 0.55 + Math.cos(rad) * bow;
-            const cy = Math.cos(rad) * len * 0.55 - Math.sin(rad) * bow;
-            const d = 'M' + ANCHOR_X + ',0 Q' + cx.toFixed(1) + ',' + cy.toFixed(1) +
-                      ' ' + tipX.toFixed(1) + ',' + tipY.toFixed(1);
-            paths.forEach((p) => p.setAttribute('d', d));
-            // the tassel hangs off the end, aligned to the curve's exit angle
-            const ang = Math.atan2(tipX - cx, tipY - cy) * 180 / Math.PI;
-            tassel.style.transform =
-                'translate(' + tipX.toFixed(1) + 'px,' + tipY.toFixed(1) + 'px) rotate(' + (-ang).toFixed(1) + 'deg)';
+        /* The rope is TWO tracked points, not an angle: the tip (where the
+           tassel hangs) and the belly (the curve's control point). Driving it
+           off a single rotation is what made it feel like a rigid pendulum on
+           a short leash — the tip could only ever sit on one arc, so a wide
+           lateral pull was impossible and the rope could not fold. With the
+           belly on its own springs it LAGS behind the tip, which is exactly
+           what a real cord does: it bows against the direction of travel,
+           whips on release, and folds when the tip is pushed back toward the
+           mount (the slack has to go somewhere). */
+        function spring(k, d, x0) {
+            return { x: x0, v: 0, target: x0, k: k, d: d };
         }
-
-        let curDrop = 0, curSway = 0;
-        function render() { draw(curDrop, curSway); }
-        render();
-
         /* A damped harmonic oscillator, integrated per frame:
-               a = (-k(x - target) - d·v) / m
+               a = -k(x - target) - d·v          (mass is 1)
            GSAP's elastic ease was the problem before — it is a fixed decaying
            sine with a long tail, so it reads as jelly whatever you feed it. A
-           real spring is tuned by its damping ratio ζ = d / 2√(k·m):
+           real spring is tuned by its damping ratio ζ = d / 2√k:
              ζ < 1  underdamped — overshoots, then rings out
              ζ = 1  critical    — fastest approach, no overshoot
              ζ > 1  overdamped  — sluggish
-           The two axes get different ratios on purpose: the cord pays back in
-           fast (ζ≈0.62, one small overshoot) while the tassel keeps swinging a
-           beat longer (ζ≈0.27), which is how a pendulum behaves. */
-        function makeSpring(apply, k, d, m) {
-            let x = 0, v = 0, target = 0, raf = null;
-            const dt = 1 / 60;
-            function step() {
-                for (let i = 0; i < 2; i++) {
-                    const a = (-k * (x - target) - d * v) / m;
-                    v += a * (dt / 2);
-                    x += v * (dt / 2);
-                }
-                apply(x);
-                if (Math.abs(v) < 0.04 && Math.abs(x - target) < 0.04) {
-                    x = target; v = 0; apply(x); raf = null; return;
-                }
-                raf = requestAnimationFrame(step);
+           Each axis gets its own ratio on purpose. Sideways is the pendulum
+           and rings the longest (ζ≈0.27); the vertical pays back fast with one
+           small overshoot (ζ≈0.62); the belly sits between the two (ζ≈0.47) so
+           it trails the tip by a visible beat instead of tracking it rigidly. */
+        function integrate(s, dt) {
+            for (let i = 0; i < 2; i++) {
+                const a = -s.k * (s.x - s.target) - s.d * s.v;
+                s.v += a * (dt / 2);
+                s.x += s.v * (dt / 2);
             }
-            return {
-                hold(val) { if (raf) cancelAnimationFrame(raf); raf = null; x = val; v = 0; apply(x); },
-                release(vel) { v = vel || 0; if (!raf) raf = requestAnimationFrame(step); },
-            };
         }
 
-        const drop = makeSpring((y) => { curDrop = y; render(); }, 210, 18, 1);
-        const sway = makeSpring((r) => { curSway = r; render(); }, 60, 4.2, 1);
+        const tipX  = spring(60,  4.2, ANCHOR_X);
+        const tipY  = spring(210, 18,  REST_LEN);
+        const belX  = spring(90,  9,   ANCHOR_X);
+        const belY  = spring(90,  9,   REST_LEN / 2);
+        const springs = [tipX, tipY, belX, belY];
+
+        let hoverPush = 0;      // lateral disturbance from a passing pointer
+        let dragging = false;
+
+        // where the belly wants to be: halfway along, plus however much rope
+        // is not being used — slack has to hang somewhere, and gravity picks down
+        function aimBelly() {
+            const dx = tipX.x - ANCHOR_X, dy = tipY.x;
+            const slack = Math.max(0, REST_LEN - Math.hypot(dx, dy));
+            belX.target = ANCHOR_X + dx / 2;
+            belY.target = dy / 2 + slack * 0.9;
+        }
+
+        function draw() {
+            const tx = tipX.x, ty = tipY.x, cx = belX.x, cy = belY.x;
+            const d = 'M' + ANCHOR_X + ',0 Q' + cx.toFixed(1) + ',' + cy.toFixed(1) +
+                      ' ' + tx.toFixed(1) + ',' + ty.toFixed(1);
+            paths.forEach((p) => p.setAttribute('d', d));
+            // the tassel hangs off the end, aligned to the curve's exit angle
+            const ang = Math.atan2(tx - cx, ty - cy) * 180 / Math.PI;
+            tassel.style.transform =
+                'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px) rotate(' + (-ang).toFixed(1) + 'deg)';
+        }
+
+        let raf = null, last = 0;
+        function frame(now) {
+            const dt = Math.min(0.05, (now - last) / 1000) || 1 / 60;
+            last = now;
+            // The brush from a passing pointer is an IMPULSE, not a held
+            // offset: it decays away so the rope settles and the loop can stop.
+            // Left sustained, a mouse resting anywhere near the cord pinned it
+            // off-centre and kept a per-frame SVG repaint running forever.
+            hoverPush *= Math.pow(0.12, dt);
+            if (Math.abs(hoverPush) < 0.05) hoverPush = 0;
+            tipX.target = ANCHOR_X + hoverPush;
+            tipY.target = REST_LEN;
+            aimBelly();
+            if (!dragging) { integrate(tipX, dt); integrate(tipY, dt); }
+            integrate(belX, dt);
+            integrate(belY, dt);
+            draw();
+            const moving = springs.some((s) =>
+                Math.abs(s.v) > 0.06 || Math.abs(s.x - s.target) > 0.06);
+            if (dragging || moving || hoverPush) { raf = requestAnimationFrame(frame); }
+            else { raf = null; }
+        }
+        function wake() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+        draw();
 
         function tug() {
             // a click is a short sharp pull: hand it downward velocity and let
             // the spring do the rest rather than scripting the bounce
-            drop.hold(28);
-            drop.release(210);
-            sway.hold(1.5);
-            sway.release(24);
+            tipY.x = REST_LEN + 28; tipY.v = 210;
+            tipX.v = 24;
+            wake();
             pull();
         }
 
         cordEl.addEventListener('click', tug);
 
-        // drag-and-release, with the rope leaning toward the pull
-        let startY = null, startX = 0, lastDy = 0;
+        // ---- drag: the tip goes wherever the pointer goes -------------------
+        // Only the rope's length constrains it, so it can be hauled right
+        // across the screen and swung up past the horizontal, and pushing it
+        // back toward the mount folds it rather than shortening it.
+        /* #cord is position:fixed, so its viewport rect only changes on resize
+           or when --nav-h moves it — cache it. Measuring it inside a pointermove
+           handler forces a layout flush on every mouse move, which is exactly
+           the kind of thing that shows up as scroll jank. */
+        let cordRect = null;
+        const rectOf = () => (cordRect || (cordRect = cordEl.getBoundingClientRect()));
+        const dropRect = () => { cordRect = null; };
+        window.addEventListener('resize', dropRect);
+        window.addEventListener('load', dropRect);
+        const local = (e) => {
+            const r = rectOf();
+            return { x: e.clientX - r.left, y: e.clientY - r.top };
+        };
+        let startY = null, px = 0, py = 0, pvx = 0, pvy = 0, pt = 0;
+
         cordEl.addEventListener('pointerdown', (e) => {
-            startY = e.clientY; startX = e.clientX;
+            const p = local(e);
+            startY = e.clientY;
+            dragging = true;
+            px = p.x; py = p.y; pvx = pvy = 0; pt = performance.now();
+            dropRect();                       // re-measure before a drag reads it
             cordEl.setPointerCapture(e.pointerId);
+            wake();
         });
         cordEl.addEventListener('pointermove', (e) => {
-            if (startY === null) return;
-            const dy = Math.max(0, Math.min(90, e.clientY - startY));
-            const dx = Math.max(-60, Math.min(60, e.clientX - startX));
-            lastDy = dy;
-            // rotation is about the mount at the TOP, and a positive CSS
-            // rotation swings the hanging end LEFT — negated so the rope
-            // leans toward the cursor rather than away from it
-            drop.hold(dy);
-            // the tip should follow the cursor, so a rightward drag swings right
-            sway.hold(dx * 0.16);
+            if (!dragging) return;
+            const p = local(e);
+            let dx = p.x - ANCHOR_X;
+            let dy = Math.max(0, p.y);            // never above its own bracket
+            const dist = Math.hypot(dx, dy) || 1;
+            // the cord is inextensible: past its length the tip rides the arc
+            const len = Math.min(MAX_LEN, dist);
+            const nx = ANCHOR_X + (dx / dist) * len, ny = (dy / dist) * len;
+            const now = performance.now(), dt = Math.max(8, now - pt) / 1000;
+            pvx = (nx - tipX.x) / dt; pvy = (ny - tipY.x) / dt;
+            pt = now;
+            tipX.x = nx; tipY.x = ny;
+            px = p.x; py = p.y;
+            // draw here as well as in the loop: while the hand is on it the
+            // tip must track the pointer exactly, even if the ticker stalls
+            draw();
+            wake();
         });
         cordEl.addEventListener('pointerup', (e) => {
-            if (startY === null) return;
+            if (!dragging) return;
             const dy = e.clientY - startY;
-            startY = null;
+            dragging = false; startY = null;
             try { cordEl.releasePointerCapture(e.pointerId); } catch (err) {}
-            // let go with no injected velocity — the spring pulls it home from
-            // wherever the hand left it, which is what release actually is
-            drop.release(0);
-            sway.release(0);
+            // let go carrying the hand's own velocity — that is what makes it
+            // whip rather than just easing home from where it was left
+            tipX.v = Math.max(-1400, Math.min(1400, pvx));
+            tipY.v = Math.max(-1400, Math.min(1400, pvy));
+            wake();
             if (dy > 26) { e.preventDefault(); pull(); }
         });
+
+        /* Passing the pointer near the rope pushes it aside, so it sways
+           without being grabbed. Falls off with distance and settles through
+           the same spring, so a mouse swept across it leaves it swinging.
+           Skipped under reduced motion — nothing here is load-bearing. */
+        if (!reduce && window.matchMedia('(pointer: fine)').matches) {
+            window.addEventListener('pointermove', (e) => {
+                if (dragging) return;
+                const r = rectOf();
+                const x = e.clientX - r.left, y = e.clientY - r.top;
+                // measure to the rope's midpoint, which is where it is easiest to brush
+                const mx = (ANCHOR_X + tipX.x + belX.x * 2) / 4;
+                const my = (tipY.x + belY.x * 2) / 4;
+                const dist = Math.hypot(x - mx, y - my);
+                const near = Math.max(0, 1 - dist / HOVER_R);
+                if (!near) {
+                    if (hoverPush) { hoverPush = 0; wake(); }
+                    return;
+                }
+                // pushed away from the pointer, hardest when closest
+                const dir = x > mx ? -1 : 1;
+                const push = dir * near * near * 30;
+                if (Math.abs(push) > Math.abs(hoverPush)) hoverPush = push;
+                wake();
+            }, { passive: true });
+        }
     })();
 
     // ---- plain mode's section index ---------------------------------------

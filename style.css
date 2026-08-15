@@ -53,7 +53,12 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* film grain — kills gradient banding, adds texture */
+/* Film grain — kills gradient banding, adds texture.
+   It deliberately does NOT use mix-blend-mode. A full-viewport blended layer
+   sitting on top of everything has to re-blend the whole screen every frame
+   that anything under it moves — and under it are 30 falling cards, the dust
+   and the whole scrolling page, so it turned every scroll into a full-viewport
+   composite and made the show version stutter. Plain alpha composites once. */
 body::before {
     content: '';
     position: fixed;
@@ -61,8 +66,7 @@ body::before {
     z-index: 2000;
     pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    opacity: 0.05;
-    mix-blend-mode: overlay;
+    opacity: 0.035;
 }
 
 /* The UA rule for [hidden] is display:none at the lowest specificity, so any
@@ -502,6 +506,7 @@ body.plain #cord:hover::after { color: var(--text); }
 #work    { view-transition-name: vt-s1; }
 #track   { view-transition-name: vt-s2; }
 #stack   { view-transition-name: vt-s3; }
+#other   { view-transition-name: vt-s5; }
 #contact { view-transition-name: vt-s4; }
 footer   { view-transition-name: vt-foot; }
 /* The cord is deliberately NOT named. Giving it its own group and pinning it
@@ -546,12 +551,14 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-old(vt-s2)   { animation: layer-out 0.34s var(--w-s2, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-s3)   { animation: layer-out 0.34s var(--w-s3, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-s4)   { animation: layer-out 0.34s var(--w-s4, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-old(vt-s5)   { animation: layer-out 0.34s var(--w-s5, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-foot) { animation: layer-out 0.34s var(--w-foot, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 
 ::view-transition-new(vt-s1)   { animation: layer-in  0.62s var(--w-s1, 0.20s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-s2)   { animation: layer-in  0.62s var(--w-s2, 0.27s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-s3)   { animation: layer-in  0.62s var(--w-s3, 0.34s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-s4)   { animation: layer-in  0.62s var(--w-s4, 0.41s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+::view-transition-new(vt-s5)   { animation: layer-in  0.62s var(--w-s5, 0.44s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-foot) { animation: layer-in  0.62s var(--w-foot, 0.48s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Each region also moves along its OWN axis: outward from the cord as it
@@ -565,6 +572,7 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-old(vt-s2),   ::view-transition-new(vt-s2)   { --wdx: var(--w-s2-x, 0px);   --wdy: var(--w-s2-y, 26px); }
 ::view-transition-old(vt-s3),   ::view-transition-new(vt-s3)   { --wdx: var(--w-s3-x, 0px);   --wdy: var(--w-s3-y, 26px); }
 ::view-transition-old(vt-s4),   ::view-transition-new(vt-s4)   { --wdx: var(--w-s4-x, 0px);   --wdy: var(--w-s4-y, 26px); }
+::view-transition-old(vt-s5),   ::view-transition-new(vt-s5)   { --wdx: var(--w-s5-x, 0px);   --wdy: var(--w-s5-y, 26px); }
 ::view-transition-old(vt-foot), ::view-transition-new(vt-foot) { --wdx: var(--w-foot-x, 0px); --wdy: var(--w-foot-y, 26px); }
 
 @keyframes layer-out {
