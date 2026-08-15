@@ -11,7 +11,11 @@
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<!-- The plain, professional version is the DEFAULT. The class is in the markup,
+     not applied by JS, so the first paint is already light — setting it from a
+     script gives a flash of the dark show on every load — and so no-JS gets it
+     too. The cord opts into the card show; script.js restores the stored choice. -->
+<body class="plain">
     <!-- SVG library: suits + Bicycle-style card back (all drawn, no images) -->
     <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
         <defs>
@@ -157,7 +161,7 @@
     <!-- ambient cards drifting down the side margins (built by animations.js) -->
     <div id="drift" aria-hidden="true"></div>
 
-    <a class="skip-link" href="#work">Skip to work</a>
+    <a class="skip-link" href="#track">Skip to content</a>
 
     <!-- ================= NAV ================= -->
     <nav id="nav" aria-label="Primary">
@@ -166,9 +170,10 @@
             <svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-heart"/></svg>
         </a>
         <div class="nav-links">
-            <a href="#work">Work</a>
             <a href="#track">Experience</a>
+            <a href="#work">Projects</a>
             <a href="#stack">Skills</a>
+            <a href="#other">Other</a>
         </div>
         <a class="nav-cta" href="#contact">Get in touch</a>
     </nav>
@@ -193,7 +198,7 @@
                 </span>
                 <span class="rail-label">Home</span>
             </a>
-            <a class="rail-card" href="#work" data-section="work">
+            <a class="rail-card" href="#track" data-section="track">
                 <span class="rail-num" aria-hidden="true">02</span>
                 <span class="rc-back"><svg><use href="#card-back"/></svg></span>
                 <span class="rc-face">
@@ -206,9 +211,9 @@
                         <span class="rf-ci bottom red">2<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
                     </span>
                 </span>
-                <span class="rail-label">Work</span>
+                <span class="rail-label">Experience</span>
             </a>
-            <a class="rail-card" href="#track" data-section="track">
+            <a class="rail-card" href="#work" data-section="work">
                 <span class="rail-num" aria-hidden="true">03</span>
                 <span class="rc-back"><svg><use href="#card-back"/></svg></span>
                 <span class="rc-face">
@@ -222,7 +227,7 @@
                         <span class="rf-ci bottom red">3<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
                     </span>
                 </span>
-                <span class="rail-label">Experience</span>
+                <span class="rail-label">Projects</span>
             </a>
             <a class="rail-card" href="#stack" data-section="stack">
                 <span class="rail-num" aria-hidden="true">04</span>
@@ -241,7 +246,7 @@
                 </span>
                 <span class="rail-label">Skills</span>
             </a>
-            <a class="rail-card" href="#contact" data-section="contact">
+            <a class="rail-card" href="#other" data-section="other">
                 <span class="rail-num" aria-hidden="true">05</span>
                 <span class="rc-back"><svg><use href="#card-back"/></svg></span>
                 <span class="rc-face">
@@ -255,6 +260,25 @@
                             <svg class="pip" style="left:73%;top:82%"><use href="#suit-heart"/></svg>
                         </span>
                         <span class="rf-ci bottom red">5<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Other</span>
+            </a>
+            <a class="rail-card" href="#contact" data-section="contact">
+                <span class="rail-num" aria-hidden="true">06</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <span class="rf-ci top red">6<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip" style="left:27%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:18%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:27%;top:50%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:50%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:27%;top:82%"><use href="#suit-heart"/></svg>
+                            <svg class="pip" style="left:73%;top:82%"><use href="#suit-heart"/></svg>
+                        </span>
+                        <span class="rf-ci bottom red">6<svg class="suit-icon"><use href="#suit-heart"/></svg></span>
                     </span>
                 </span>
                 <span class="rail-label">Contact</span>
@@ -297,94 +321,77 @@
                 <span class="pill"><i class="dot" aria-hidden="true"></i>Singapore → Los Angeles</span>
             </div>
             <div class="hero-cta">
-                <a class="btn btn-solid" href="#work">See my work</a>
+                <a class="btn btn-solid" href="#work">See my projects</a>
             </div>
         </div>
 
 
-        <a class="cue" href="#work" aria-label="Scroll to the work">
+        <a class="cue" href="#track" aria-label="Scroll to the first section">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8l7 7 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
     </header>
 
     <main>
 
+    <!-- ================= EXPERIENCE (jobs) =================
+         Paid work only — internships and the self-employed stretch. Research,
+         teaching and study live in #other so this section answers one question. -->
+    <section id="track" class="sec">
+        <div class="wrap">
+            <header class="sec-head">
+                <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-heart"/></svg>Experience</p>
+                <h2>Where I’ve worked.</h2>
+            </header>
+
+            <ol class="track">
+                <li class="tr">
+                    <span class="tr-n" aria-hidden="true">01</span>
+                    <div class="tr-body">
+                        <p class="tr-when">June – Sept 2026</p>
+                        <h3>Software Engineer Intern, AI Applications<span class="tr-org">Liba Space</span></h3>
+                        <p class="tr-note">Onsite, on the auto-job-apply pipeline and the platform around it.</p>
+                        <ul>
+                            <li>Architected a distributed job-ingestion system on Kafka-based microservices, scaling out to <strong>33 parsers across 18 applicant tracking systems</strong> by partitioning work across independently deployable processors.</li>
+                            <li>Designed a dual-lane fetch architecture — JSON-backed sources to a high-concurrency httpx and curl_cffi lane, JS-heavy targets to a Playwright browser lane — so expensive browser sessions are reserved for the sources that need them.</li>
+                            <li>Instrumented the pipeline with execution traces, screenshots and session recordings in MySQL on AWS EC2, clustering failures by error signature to isolate root causes and driving application success rate to <strong>~80%</strong>.</li>
+                            <li>Engineered a multi-provider CAPTCHA-bypass system (hCaptcha, Cloudflare Turnstile, invisible reCAPTCHA v3) with scored-token injection, sticky-session residential proxies and an anti-detection browser stack, protecting the product’s core paid feature.</li>
+                            <li>Built a hybrid retrieval pipeline — regex filtering, embedding search and LLM query interpretation — to classify and organise job alert emails.</li>
+                            <li>Ran an in-house A/B test with randomised variant assignment across thousands of visitors, lifting signups <strong>~35%</strong>.</li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="tr">
+                    <span class="tr-n" aria-hidden="true">02</span>
+                    <div class="tr-body">
+                        <p class="tr-when">Aug – Dec 2024</p>
+                        <h3>Engineer Intern<span class="tr-org">Futurum Academy, Singapore</span></h3>
+                        <ul>
+                            <li>Mentored two competitive VEX V5 robotics teams at a leading coding and robotics academy.</li>
+                            <li>Coached mechanical design and autonomous path planning; ran CAD sessions for hands-on engineering practice.</li>
+                        </ul>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+
     <!-- ================= THE HAND (projects) ================= -->
     <section id="work" class="sec">
         <div class="wrap">
             <header class="sec-head">
-                <p class="kicker"><svg class="suit-icon" aria-hidden="true"><use href="#suit-spade"/></svg>Selected work</p>
+                <p class="kicker"><svg class="suit-icon" aria-hidden="true"><use href="#suit-spade"/></svg>Projects</p>
                 <h2>Things I’ve built.</h2>
-                <p class="sec-sub">Each one shipped end to end. More on GitHub.</p>
+                <p class="sec-sub">Side projects, built for my own reasons and shipped end to end. More on GitHub.</p>
             </header>
 
             <ol class="hand">
 
-                <!-- A♠ -->
+                <!-- Card Magic Learning Platform -->
                 <li class="proj" data-suit="black">
-                    <div class="proj-shot">
-                        <img src="shots/research-matching.jpg" alt="ProfMatch — the research interest matching tool" loading="lazy" width="1100" height="617">
-                    </div>
-                    <div class="proj-body">
-                        <p class="proj-tags-top">
-                            <span class="badge badge-live">Shipped</span>
-                            <span class="when">Nov – Dec 2025</span>
-                        </p>
-                        <h3 class="proj-name">Research Interest Matching</h3>
-                        <ul class="proj-specs">
-                            <li>Scraped, cleaned and embedded research profiles for <strong>300+ professors</strong> across multiple departments and universities.</li>
-                            <li>Similarity search surfaces aligned researchers in <strong>seconds instead of hours</strong>.</li>
-                        </ul>
-                        <div class="tags"><span class="tag">Python</span><span class="tag">NLP</span><span class="tag">Web scraping</span></div>
-                        <a href="https://faculty-project-nextjs.vercel.app" target="_blank" rel="noopener" class="btn">Visit <span class="arrow" aria-hidden="true">↗</span></a>
-                    </div>
-                </li>
-
-                <!-- K♦ -->
-                <li class="proj" data-suit="red">
-                    <div class="proj-shot">
-                        <img src="shots/double-major.jpg" alt="Course Planner — the double major optimisation tool" loading="lazy" width="1100" height="617">
-                    </div>
-                    <div class="proj-body">
-                        <p class="proj-tags-top">
-                            <span class="badge badge-live">Live</span>
-                            <span class="when">Sept 2025 – now</span>
-                        </p>
-                        <h3 class="proj-name">Double Major Optimization</h3>
-                        <ul class="proj-specs">
-                            <li>Pipeline scrapes UCLA’s <strong>200+ program requirements</strong>, structuring unorganised text with the Gemini API into courses and dependencies.</li>
-                            <li>Analysed <strong>8,000+ course entries</strong> to find the most efficient double-major paths for <strong>33,000+ undergraduates</strong>.</li>
-                        </ul>
-                        <div class="tags"><span class="tag">Python</span><span class="tag">Gemini API</span><span class="tag">Optimization</span></div>
-                        <a href="https://doublemajor.vercel.app/" target="_blank" rel="noopener" class="btn">Visit <span class="arrow" aria-hidden="true">↗</span></a>
-                    </div>
-                </li>
-
-                <!-- Q♥ -->
-                <li class="proj" data-suit="red">
-                    <div class="proj-shot">
-                        <img src="shots/envy.jpg" alt="The Envy write-up published by DataRes at UCLA" loading="lazy" width="1100" height="617">
-                    </div>
-                    <div class="proj-body">
-                        <p class="proj-tags-top">
-                            <span class="badge">Project lead · Datares</span>
-                            <span class="when">Oct – Dec 2025</span>
-                        </p>
-                        <h3 class="proj-name">Factors Influencing Envy</h3>
-                        <ul class="proj-specs">
-                            <li>Sourced <strong>10,000+ survey responses</strong> to study what drives envy — personality traits and internet usage patterns.</li>
-                            <li>Cleaned and analysed in pandas, producing <strong>5+ visualisations</strong> that surfaced the strongest factors.</li>
-                        </ul>
-                        <div class="tags"><span class="tag">Python</span><span class="tag">Pandas</span><span class="tag">Seaborn</span><span class="tag">EDA</span></div>
-                        <a href="https://ucladatares.medium.com/understanding-envy-in-a-competitive-modern-world-toward-greater-self-awareness-776ae1c9557b" target="_blank" rel="noopener" class="btn">Read the write-up <span class="arrow" aria-hidden="true">↗</span></a>
-                    </div>
-                </li>
-
-                <!-- J♣ -->
-                <li class="proj" data-suit="black">
-                    <div class="proj-shot">
+                    <a class="proj-shot" href="https://www.skill-tree.live/" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
                         <img src="shots/skill-tree.jpg" alt="MinMax — the card magic learning platform" loading="lazy" width="1100" height="617">
-                    </div>
+                    </a>
                     <div class="proj-body">
                         <p class="proj-tags-top">
                             <span class="badge badge-live">Live</span>
@@ -400,16 +407,134 @@
                     </div>
                 </li>
 
-            </ol>
+                <!-- OHMS — hackathon build, no live deployment to screenshot, so
+                     this card runs as a single copy column. animations.js already
+                     guards on a missing .proj-shot. -->
+                <li class="proj proj-solo" data-suit="red">
+                    <div class="proj-body">
+                        <p class="proj-tags-top">
+                            <span class="badge">Honorable mention · 200+ teams</span>
+                            <span class="when">Mar 2026</span>
+                        </p>
+                        <h3 class="proj-name">OHMS</h3>
+                        <ul class="proj-specs">
+                            <li>Full-stack AI music composition platform, built at the <strong>Google DeepMind × UCLA hackathon</strong> and placed among <strong>200+ teams</strong>.</li>
+                            <li>Real-time gesture-to-audio control on MediaPipe dual-hand tracking — position and pinch drive volume, echo/delay and reverb, alongside continuous pitch detection, feeding a Strudel live-coding engine for low-latency response.</li>
+                            <li>Google’s Lyria and Gemini Flash generate music from natural language, voice and gesture, with Supabase handling session state, audio storage and collaborative sharing.</li>
+                        </ul>
+                        <div class="tags"><span class="tag">MediaPipe</span><span class="tag">Lyria</span><span class="tag">Gemini Flash</span><span class="tag">Strudel</span><span class="tag">Supabase</span></div>
+                        <a href="https://github.com/Borislo83/Gemini_Hackathon" target="_blank" rel="noopener" class="btn">Source <span class="arrow" aria-hidden="true">↗</span></a>
+                    </div>
+                </li>
+
+
+
+                <!-- Research Interest Matching -->
+                <li class="proj" data-suit="black">
+                    <a class="proj-shot" href="https://faculty-project-nextjs.vercel.app" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+                        <img src="shots/research-matching.jpg" alt="ProfMatch — the research interest matching tool" loading="lazy" width="1100" height="617">
+                    </a>
+                    <div class="proj-body">
+                        <p class="proj-tags-top">
+                            <span class="badge badge-live">Shipped</span>
+                            <span class="when">Nov 2025 – Jan 2026</span>
+                        </p>
+                        <h3 class="proj-name">Research Interest Matching</h3>
+                        <ul class="proj-specs">
+                            <li>Full-stack faculty-matching platform on Next.js, FastAPI and MySQL — semantic search across <strong>300+ professor profiles</strong> from multiple departments and universities, collapsing hours of page-by-page review into one query.</li>
+                            <li>Local search engine built on sentence-transformer embeddings in a <strong>FAISS index</strong>, moving inference in-process to cut latency and cost against an earlier hosted-API version.</li>
+                            <li>RAG chatbot over Gemini with LangChain and LangGraph — multi-query expansion, an agentic tool-calling loop and running-summary memory, streamed to the frontend in real time.</li>
+                        </ul>
+                        <div class="tags"><span class="tag">Next.js</span><span class="tag">FastAPI</span><span class="tag">FAISS</span><span class="tag">LangGraph</span><span class="tag">MySQL</span></div>
+                        <a href="https://faculty-project-nextjs.vercel.app" target="_blank" rel="noopener" class="btn">Visit <span class="arrow" aria-hidden="true">↗</span></a>
+                    </div>
+                </li>
+
+                <!-- Double Major Optimization -->
+                <li class="proj" data-suit="red">
+                    <a class="proj-shot" href="https://doublemajor.vercel.app/" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+                        <img src="shots/double-major.jpg" alt="Course Planner — the double major optimisation tool" loading="lazy" width="1100" height="617">
+                    </a>
+                    <div class="proj-body">
+                        <p class="proj-tags-top">
+                            <span class="badge badge-live">Live</span>
+                            <span class="when">Sept 2025 – Jan 2026</span>
+                        </p>
+                        <h3 class="proj-name">Double Major Optimization</h3>
+                        <ul class="proj-specs">
+                            <li>Multistage Python pipeline with BeautifulSoup, Pandas and Gemini 2.5 Flash turns <strong>200+ program pages</strong> of unstructured text into a normalised database of <strong>8,000+ courses</strong> and their prerequisite chains.</li>
+                            <li>Degree planning framed as a constraint-satisfaction problem — a recursive solver resolves AND/OR requirement trees and computes minimum course sets and cross-major overlap.</li>
+                            <li>Shipped on Next.js and FastAPI, used by classmates for real planning and applicable to UCLA’s <strong>33,000+ undergraduates</strong>.</li>
+                        </ul>
+                        <div class="tags"><span class="tag">Python</span><span class="tag">Gemini API</span><span class="tag">FastAPI</span><span class="tag">Next.js</span><span class="tag">CSP</span></div>
+                        <a href="https://doublemajor.vercel.app/" target="_blank" rel="noopener" class="btn">Visit <span class="arrow" aria-hidden="true">↗</span></a>
+                    </div>
+                </li>
+
+                <!-- Factors Influencing Envy -->
+                <li class="proj" data-suit="red">
+                    <a class="proj-shot" href="https://ucladatares.medium.com/understanding-envy-in-a-competitive-modern-world-toward-greater-self-awareness-776ae1c9557b" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+                        <img src="shots/envy.jpg" alt="The Envy write-up published by DataRes at UCLA" loading="lazy" width="1100" height="617">
+                    </a>
+                    <div class="proj-body">
+                        <p class="proj-tags-top">
+                            <span class="badge">Project lead · Datares</span>
+                            <span class="when">Oct – Dec 2025</span>
+                        </p>
+                        <h3 class="proj-name">Factors Influencing Envy</h3>
+                        <ul class="proj-specs">
+                            <li>Sourced <strong>10,000+ survey responses</strong> to study what drives envy — personality traits and internet usage patterns.</li>
+                            <li>Cleaned and analysed in pandas, producing <strong>5+ visualisations</strong> that surfaced the strongest factors.</li>
+                        </ul>
+                        <div class="tags"><span class="tag">Python</span><span class="tag">Pandas</span><span class="tag">Seaborn</span><span class="tag">EDA</span></div>
+                        <a href="https://ucladatares.medium.com/understanding-envy-in-a-competitive-modern-world-toward-greater-self-awareness-776ae1c9557b" target="_blank" rel="noopener" class="btn">Read the write-up <span class="arrow" aria-hidden="true">↗</span></a>
+                    </div>
+                </li>            </ol>
         </div>
     </section>
 
-    <!-- ================= TRACK RECORD ================= -->
-    <section id="track" class="sec">
+
+    <!-- ================= THE STACK ================= -->
+    <section id="stack" class="sec">
         <div class="wrap">
             <header class="sec-head">
-                <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-heart"/></svg>Experience</p>
-                <h2>Where I’ve worked and studied.</h2>
+                <p class="kicker"><svg class="suit-icon" aria-hidden="true"><use href="#suit-club"/></svg>Skills</p>
+                <h2>Tools I work with.</h2>
+            </header>
+            <dl class="stack">
+                <div class="stack-row">
+                    <dt>Languages</dt>
+                    <dd class="tags"><span class="tag">Python</span><span class="tag">Java</span><span class="tag">C++</span><span class="tag">TypeScript</span><span class="tag">SQL</span><span class="tag">Swift</span></dd>
+                </div>
+                <div class="stack-row">
+                    <dt>Backend &amp; infra</dt>
+                    <dd class="tags"><span class="tag">FastAPI</span><span class="tag">Kafka</span><span class="tag">MySQL</span><span class="tag">AWS EC2</span><span class="tag">Playwright</span><span class="tag">Supabase</span><span class="tag">Linux</span></dd>
+                </div>
+                <div class="stack-row">
+                    <dt>AI &amp; data</dt>
+                    <dd class="tags"><span class="tag">LangChain</span><span class="tag">LangGraph</span><span class="tag">FAISS</span><span class="tag">RAG pipelines</span><span class="tag">sentence-transformers</span><span class="tag">Gemini API</span><span class="tag">Pandas</span><span class="tag">BeautifulSoup</span></dd>
+                </div>
+                <div class="stack-row">
+                    <dt>Frontend</dt>
+                    <dd class="tags"><span class="tag">Next.js</span><span class="tag">React</span><span class="tag">Vue 3</span></dd>
+                </div>
+                <div class="stack-row">
+                    <dt>Tooling</dt>
+                    <dd class="tags"><span class="tag">Git</span><span class="tag">GitHub</span><span class="tag">Vercel</span><span class="tag">Render</span></dd>
+                </div>
+            </dl>
+        </div>
+    </section>
+
+
+    <!-- ================= OTHER =================
+         The mixed bag: research and the papers that came out of it, teaching,
+         and where I studied. -->
+    <section id="other" class="sec">
+        <div class="wrap">
+            <header class="sec-head">
+                <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#suit-diamond"/></svg>Other</p>
+                <h2>Research, teaching and study.</h2>
             </header>
 
             <ol class="track">
@@ -418,7 +543,7 @@
                     <div class="tr-body">
                         <p class="tr-when">2025 – 2028</p>
                         <h3>B.S. Mathematics of Computation<span class="tr-org">UCLA</span></h3>
-                        <p class="tr-note">GPA 3.5/4.0. Coursework in programming (C++) and Data, Justice &amp; Society — the ethics of AI and data systems.</p>
+                        <p class="tr-note">GPA 3.95/4.0. Coursework in programming (C++) and Data, Justice &amp; Society — the ethics of AI and data systems.</p>
                     </div>
                 </li>
                 <li class="tr">
@@ -436,42 +561,12 @@
                 <li class="tr">
                     <span class="tr-n" aria-hidden="true">03</span>
                     <div class="tr-body">
-                        <p class="tr-when">Aug – Dec 2024</p>
-                        <h3>Engineer Intern<span class="tr-org">Futurum Academy, Singapore</span></h3>
-                        <ul>
-                            <li>Mentored two competitive VEX V5 robotics teams at a leading coding and robotics academy.</li>
-                            <li>Coached mechanical design and autonomous path planning; ran CAD sessions for hands-on engineering practice.</li>
-                        </ul>
-                    </div>
-                </li>
-                <li class="tr">
-                    <span class="tr-n" aria-hidden="true">04</span>
-                    <div class="tr-body">
-                        <p class="tr-when">Sept 2023 – Mar 2024</p>
-                        <h3>Self-Employed iOS Developer<span class="tr-org">Independent</span></h3>
-                        <ul>
-                            <li>Shipped a task and learning management app in Swift — note-taking, photo organisation, progress tracking.</li>
-                            <li>Added data persistence so users could monitor learning habits over time.</li>
-                        </ul>
-                    </div>
-                </li>
-                <li class="tr">
-                    <span class="tr-n" aria-hidden="true">05</span>
-                    <div class="tr-body">
                         <p class="tr-when">May – Sept 2023</p>
                         <h3>Director, Singapore Chapter<span class="tr-org">San Antonio Math Include</span></h3>
                         <ul>
                             <li>Launched SaMi’s first Singapore chapter, extending free STEM tutoring across Singapore and China.</li>
                             <li>Recruited 7 volunteer tutors teaching 30+ students across 7 STEM disciplines; partnered 5 schools and 3 organisations.</li>
                         </ul>
-                    </div>
-                </li>
-                <li class="tr">
-                    <span class="tr-n" aria-hidden="true">06</span>
-                    <div class="tr-body">
-                        <p class="tr-when">2021 – 2025</p>
-                        <h3>High School Diploma<span class="tr-org">Singapore American School</span></h3>
-                        <p class="tr-note">GPA 4.41.</p>
                     </div>
                 </li>
             </ol>
@@ -493,37 +588,6 @@
         </div>
     </section>
 
-    <!-- ================= THE STACK ================= -->
-    <section id="stack" class="sec">
-        <div class="wrap">
-            <header class="sec-head">
-                <p class="kicker"><svg class="suit-icon" aria-hidden="true"><use href="#suit-club"/></svg>Skills</p>
-                <h2>Tools I work with.</h2>
-            </header>
-            <dl class="stack">
-                <div class="stack-row">
-                    <dt>Languages</dt>
-                    <dd class="tags"><span class="tag">Python</span><span class="tag">C++</span><span class="tag">SQL</span><span class="tag">Java</span><span class="tag">Swift</span></dd>
-                </div>
-                <div class="stack-row">
-                    <dt>Frameworks</dt>
-                    <dd class="tags"><span class="tag">NumPy</span><span class="tag">Pandas</span><span class="tag">Seaborn</span><span class="tag">BeautifulSoup</span><span class="tag">FastAPI</span><span class="tag">Next.js</span></dd>
-                </div>
-                <div class="stack-row">
-                    <dt>Data</dt>
-                    <dd class="tags"><span class="tag">MySQL</span><span class="tag">SQLAlchemy</span></dd>
-                </div>
-                <div class="stack-row">
-                    <dt>AI</dt>
-                    <dd class="tags"><span class="tag">Gemini API</span><span class="tag">LLaMA-Factory</span><span class="tag">Coze</span></dd>
-                </div>
-                <div class="stack-row">
-                    <dt>Tooling</dt>
-                    <dd class="tags"><span class="tag">Git</span><span class="tag">GitHub</span><span class="tag">Vercel</span><span class="tag">Render</span></dd>
-                </div>
-            </dl>
-        </div>
-    </section>
 
     </main>
 

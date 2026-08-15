@@ -597,7 +597,12 @@ footer   { view-transition-name: vt-foot; }
     flex-direction: column;
     justify-content: center;
     overflow: hidden;
-    padding: clamp(6rem, 14vh, 9rem) var(--gut) 0;
+    /* Equal top and bottom padding. `justify-content: center` centres the
+       content BOX, not the content in the viewport — with padding only on top,
+       the block landed padding-top/2 (~72px) below the true centre, which read
+       as the hero sitting low. The top value still clears the fixed top bar
+       below 1280px, so only the bottom half is new. */
+    padding: clamp(6rem, 14vh, 9rem) var(--gut);
     isolation: isolate;
 }
 
@@ -1078,11 +1083,21 @@ footer   { view-transition-name: vt-foot; }
 }
 /* alternate the side the card sits on so the page has a rhythm */
 .proj:nth-child(even) .proj-shot { order: 2; }
+/* A project with no live site to capture runs as one copy column rather than
+   sitting next to an empty frame — a blank panel reads as a broken image. */
+.proj-solo { grid-template-columns: minmax(0, 1fr); }
+.proj-solo .proj-body { max-width: 68ch; }
 
 /* The project art is a screenshot of the live site — the cards that used to
    sit here carried no information about the work. Landscape frame, image
    anchored to the top so the site's header is what shows. */
+/* The art is an <a> to the same place the Visit button goes, so the obvious
+   click target works. It is aria-hidden + tabindex="-1" in the markup: the
+   button already carries that link, and a second one only adds a duplicate
+   tab stop and a duplicate announcement. Needs display:block — an anchor is
+   inline by default, which collapses the aspect-ratio frame. */
 .proj-shot {
+    display: block;
     position: relative;      /* containing block for the pointer glow */
     aspect-ratio: 16 / 10;
     width: 100%;

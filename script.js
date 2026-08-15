@@ -126,7 +126,12 @@
             if (!plain && window.railArm) window.railArm();
         }
 
-        try { if (localStorage.getItem(KEY) === '1') apply(true); } catch (e) {}
+        /* Plain is the default and ships on <body> in the markup, so the only
+           thing to restore here is an explicit opt-in to the show. Anything
+           other than a stored '0' — never pulled, storage blocked — stays
+           plain, which is the state the page already painted. */
+        try { if (localStorage.getItem(KEY) === '0') apply(false); } catch (e) {}
+        label(document.body.classList.contains('plain'));
 
         /* Every region named in the stylesheet, and the element it is on.
            The rail and the index share a name deliberately — only one of them

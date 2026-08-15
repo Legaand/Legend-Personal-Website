@@ -263,7 +263,13 @@
             // the run of cards curves away and genuinely leaves the viewport
             // rather than sitting as a straight column.
             const R = 620;
-            const STEP = 11;                       // degrees between neighbours
+            // Degrees between neighbours. Sized so the whole run still fits the
+            // screen from either end: the spread is (n-1) * STEP, and at R=620
+            // a card that far round sits R*sin(spread) px off centre. Six cards
+            // at the old 11° reached 55° — ~508px — which pushed the far card
+            // off the bottom whenever the run's other end was active, so a
+            // destination could be unreachable. 9° holds the five-card spread.
+            const STEP = 9;
             const rad = (d) => (d * Math.PI) / 180;
 
             const parts = items.map((card) => ({
