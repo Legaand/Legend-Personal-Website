@@ -720,10 +720,11 @@
         return best && bestArea > vh * 0.25 ? best.id : null;
     }
 
-    // ---- magic reels: play tiles, no preview --------------------------------
-    // Each local clip is a <video preload="none">. Arming the figure hides it
-    // behind a play tile so the native player (and its first frame) never
-    // sits on the page; no-JS skips this and the video stays visible.
+    // ---- magic reels: still + play overlay --------------------------------
+    // Each local clip is a <video preload="metadata"> with a #t=0.1 fragment,
+    // so the browser paints the frame at 0.1s as the preview. Arming hangs a
+    // play overlay on top of that still; click reveals controls and plays.
+    // No-JS skips this and the video stays a visible player.
     document.querySelectorAll('.reel:not(.reel-ig)').forEach((reel) => {
         const video = reel.querySelector('.reel-video');
         const btn = reel.querySelector('.reel-play');
@@ -731,6 +732,7 @@
         reel.classList.add('armed');
         btn.addEventListener('click', () => {
             reel.classList.add('on');
+            video.controls = true;
             video.play().catch(() => {});
         });
     });

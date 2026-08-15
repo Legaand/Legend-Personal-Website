@@ -308,23 +308,19 @@
             <!-- THE JOKER, in gold, and the last card. It is deliberately NOT
                  an 8: the ranked run is A-7 and the joker sits outside it, so
                  nothing below has to be renumbered and the run still reads
-                 A,2,3,4,5,6,7 top to bottom. Same deck, same engraved back,
-                 gold stock front and back — the odd card in the hand, which
-                 is the right card for the magic. No rank and no pips: the
-                 corner index is the star, and the face carries the section
-                 name like every other card in the rail. -->
+                 A,2,3,4,5,6,7 top to bottom. Same face as every other card in
+                 the rail — corner indices, a centre pip, the section name in
+                 the pip field — gold stock instead of cream. The back is the
+                 same engraving as the rest of the deck, recoloured. -->
             <a class="rail-card gold joker" href="#magic" data-section="magic">
                 <span class="rail-num" aria-hidden="true">08</span>
                 <span class="rc-back"><svg><use href="#card-back"/></svg></span>
                 <span class="rc-face">
                     <span class="rcard-face" data-suit="red">
-                        <!-- The face carries the SAME engraved artwork as the
-                             back, in gold: a double-backer, which is a real
-                             gaff card and the right joke for this section. The
-                             name is stamped over it on a plate, because dark
-                             type straight onto the filigree is unreadable. -->
-                        <span class="rf-art" aria-hidden="true"><svg><use href="#card-back"/></svg></span>
                         <span class="rf-ci top red"><svg class="suit-icon"><use href="#joker-star"/></svg></span>
+                        <span class="pips">
+                            <svg class="pip big" style="left:50%;top:50%"><use href="#joker-star"/></svg>
+                        </span>
                         <span class="rf-ci bottom red"><svg class="suit-icon"><use href="#joker-star"/></svg></span>
                     </span>
                 </span>
@@ -672,11 +668,10 @@
          a performance, shown, not explained. The copy stays dry for exactly
          that reason.
 
-         Local clips are click-to-play with no preview: script.js arms each
-         reel so the video stays out of sight (and unfetched — preload none)
-         until the play tile is hit. No-JS keeps the <video> visible. Do not
-         switch these to autoplay — the promo is ~12MB with its moov atom at
-         the end, and that would download on every visit.
+         Local clips keep a still as the preview: `preload="metadata"` and a
+         `#t=0.1` fragment paint the frame at 0.1s, and a play overlay sits
+         on top of it. Do not switch these to autoplay — the promo is ~12MB
+         with its moov atom at the end, and that would download on every visit.
 
          The Instagram reel is an iframe on their /embed URL, not a link and
          not their embed.js — one third-party frame, no extra script. -->
@@ -694,8 +689,8 @@
                             <span class="reel-play-mark" aria-hidden="true"></span>
                             <span class="reel-play-label">Play</span>
                         </button>
-                        <video class="reel-video" controls playsinline preload="none"
-                               src="media/spring-show-promo.mp4">
+                        <video class="reel-video" playsinline preload="metadata"
+                               src="media/spring-show-promo.mp4#t=0.1">
                             Your browser can't play this video.
                             <a href="media/spring-show-promo.mp4">Download it instead</a>.
                         </video>
@@ -711,8 +706,8 @@
                             <span class="reel-play-mark" aria-hidden="true"></span>
                             <span class="reel-play-label">Play</span>
                         </button>
-                        <video class="reel-video" controls playsinline preload="none"
-                               src="media/spring-show-closeup.mp4">
+                        <video class="reel-video" playsinline preload="metadata"
+                               src="media/spring-show-closeup.mp4#t=0.1">
                             Your browser can't play this video.
                             <a href="media/spring-show-closeup.mp4">Download it instead</a>.
                         </video>
@@ -742,8 +737,8 @@
                             <span class="reel-play-mark" aria-hidden="true"></span>
                             <span class="reel-play-label">Play</span>
                         </button>
-                        <video class="reel-video" controls playsinline preload="none"
-                               src="media/dougdoug-reaction.mp4">
+                        <video class="reel-video" playsinline preload="metadata"
+                               src="media/dougdoug-reaction.mp4#t=0.1">
                             Your browser can't play this video.
                             <a href="media/dougdoug-reaction.mp4">Download it instead</a>.
                         </video>
