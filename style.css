@@ -1587,9 +1587,14 @@ footer   { view-transition-name: vt-foot; }
     font-size: clamp(3.2rem, 9vw, 6.5rem);
     line-height: 0.92;
     letter-spacing: -0.03em;
+    /* Abril's descenders fall ~0.24em outside a 0.92 line box, so the g of
+       "Magic" lands on top of the sub-line. Reserve the room here rather
+       than on .sec-sub's margin: the padding scales with the clamped font
+       size, a rem margin does not. */
+    padding-bottom: 0.3em;
 }
 .sec-magic .sec-head { margin-bottom: clamp(2rem, 5vw, 3.5rem); }
-.sec-magic .sec-sub { margin-top: 0.4rem; }
+.sec-magic .sec-sub { margin-top: 0; }
 
 .magic-set {
     list-style: none;
@@ -1926,10 +1931,10 @@ body.plain .eyebrow { color: var(--crimson); }
 
 /* hero: same words, plain dress */
 body.plain .title { color: var(--text); }
-/* Magic keeps the metal in both modes — the word is the section's colour
-   the way the joker is gold stock. --gold is remapped to ink here, so this
-   has to name the metal directly. Deep enough to hold 3:1 on the cream. */
-body.plain .sec-magic h2 { color: #8F6A0A; }
+/* Magic is metal on the dark stage and plain ink here — the word reads as
+   one of the section heads in this mode, not as a coloured exception. It
+   still needs naming: --gold is remapped in plain, but not to the ink. */
+body.plain .sec-magic h2 { color: var(--text); }
 body.plain .pill { border-color: var(--line); color: var(--text-2); }
 
 body.plain .btn { color: var(--text); border-color: var(--line-2); }
