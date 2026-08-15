@@ -1335,8 +1335,6 @@ footer   { view-transition-name: vt-foot; }
 .proj:nth-child(even) .proj-shot { order: 2; }
 /* A project with no live site to capture runs as one copy column rather than
    sitting next to an empty frame — a blank panel reads as a broken image. */
-.proj-solo { grid-template-columns: minmax(0, 1fr); }
-.proj-solo .proj-body { max-width: 68ch; }
 
 /* The project art is a screenshot of the live site — the cards that used to
    sit here carried no information about the work. Landscape frame, image
@@ -1449,6 +1447,9 @@ footer   { view-transition-name: vt-foot; }
 }
 .tag:hover { border-color: var(--line-2); color: var(--text); }
 .proj-body .btn { margin-top: 1.6rem; }
+/* a project with both a live site and a repo carries two buttons on one row */
+.proj-links { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 1.6rem; }
+.proj-links .btn { margin-top: 0; }
 
 @media (max-width: 780px) {
     .proj { grid-template-columns: 1fr; }
