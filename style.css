@@ -24,6 +24,17 @@
     --crimson-deep: #9F1239;
     --back-red:  #C31432;   /* bicycle back panel */
     --card-face: #FAF7F0;
+    /* The gold card's stock — the Joker, the odd card in the hand.
+       Tuned AWAY from the obvious #C9982F/#A97C12 kind of "gold": those sit
+       at low saturation with green in them and read as mud, which is exactly
+       what the first pass looked like. Metal is bright, orange-biased amber
+       with hard specular banding, so these stay close to the site's own
+       --gold (#FBBF24) and the depth comes from the gradient, not from
+       darkening the base. */
+    --card-gold:   #FBD35E;
+    --card-gold-2: #E8A80F;
+    --gold-ink:    #4A3202;   /* engraving on foil: 4.5:1 on the lightest band */
+    --back-line:   var(--card-face);   /* the card back's filigree; see below */
     --ink:       #14141A;
     --ink-soft:  #55555F;
     --crimson-ink: #B91C1C; /* red that passes 4.5:1 on the light card face */
@@ -651,6 +662,7 @@ body.plain #cord:hover::after { color: var(--text); }
 #track   { view-transition-name: vt-s2; }
 #stack   { view-transition-name: vt-s3; }
 #papers  { view-transition-name: vt-s6; }
+#magic   { view-transition-name: vt-s7; }
 #other   { view-transition-name: vt-s5; }
 #contact { view-transition-name: vt-s4; }
 footer   { view-transition-name: vt-foot; }
@@ -703,6 +715,7 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-old(vt-s4)   { animation: layer-out 0.34s var(--w-s4, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-s5)   { animation: layer-out 0.34s var(--w-s5, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-s6)   { animation: layer-out 0.34s var(--w-s6, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
+::view-transition-old(vt-s7)   { animation: layer-out 0.34s var(--w-s7, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 ::view-transition-old(vt-foot) { animation: layer-out 0.34s var(--w-foot, 0s) cubic-bezier(0.4, 0, 1, 1) both; }
 
 ::view-transition-new(vt-s1)   { animation: layer-in  0.62s var(--w-s1, 0.20s) cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -711,6 +724,7 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-new(vt-s4)   { animation: layer-in  0.62s var(--w-s4, 0.41s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-s5)   { animation: layer-in  0.62s var(--w-s5, 0.44s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-s6)   { animation: layer-in  0.62s var(--w-s6, 0.44s) cubic-bezier(0.16, 1, 0.3, 1) both; }
+::view-transition-new(vt-s7)   { animation: layer-in  0.62s var(--w-s7, 0.46s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 ::view-transition-new(vt-foot) { animation: layer-in  0.62s var(--w-foot, 0.48s) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Each region also moves along its OWN axis: outward from the cord as it
@@ -726,6 +740,7 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-old(vt-s4),   ::view-transition-new(vt-s4)   { --wdx: var(--w-s4-x, 0px);   --wdy: var(--w-s4-y, 26px); }
 ::view-transition-old(vt-s5),   ::view-transition-new(vt-s5)   { --wdx: var(--w-s5-x, 0px);   --wdy: var(--w-s5-y, 26px); }
 ::view-transition-old(vt-s6),   ::view-transition-new(vt-s6)   { --wdx: var(--w-s6-x, 0px);   --wdy: var(--w-s6-y, 26px); }
+::view-transition-old(vt-s7),   ::view-transition-new(vt-s7)   { --wdx: var(--w-s7-x, 0px);   --wdy: var(--w-s7-y, 26px); }
 ::view-transition-old(vt-foot), ::view-transition-new(vt-foot) { --wdx: var(--w-foot-x, 0px); --wdy: var(--w-foot-y, 26px); }
 
 @keyframes layer-out {
@@ -1086,6 +1101,110 @@ footer   { view-transition-name: vt-foot; }
         0 1px 0 rgba(255, 255, 255, 0.55) inset,
         0 28px 64px rgba(0, 0, 0, 0.75),
         0 0 38px rgba(251, 191, 36, 0.28);
+}
+
+/* ---- the gold card: the Joker ------------------------------------------
+   The last card in the rail, and deliberately NOT an 8: the ranked run is
+   A-7 and the joker sits outside it, so adding this section renumbered
+   nothing. Same deck, same engraved artwork, gold instead of red.
+
+   It is a DOUBLE-BACKER — the face carries the same engraving as the back,
+   which is a real gaff card and the right joke for the magic section. `.rf-art`
+   is a second `<use href="#card-back">` filling the face. A flat gold gradient
+   was there first and read as an empty gold rectangle.
+
+   The artwork itself is never forked. `#card-back` is stroked and filled with
+   exactly two custom properties, and custom properties inherit through `<use>`
+   into the shadow tree, so re-pointing them recolours the whole engraving:
+     · --back-red  is the panel, flat gold
+     · --back-line is the filigree, and it INVERTS to dark. Cream lines over
+       bright foil disappear on every specular band; dark engraving on gold is
+       both legible and what a real gold-foil card looks like. The outer border
+       rect still uses --card-face, so the gold card keeps the same white edge
+       as the rest of the deck.
+
+   **Gotcha:** the panel cannot be an SVG gradient. `--back-red: url(#bb-gold)`
+   pointing at a `<linearGradient>` looks like it should work — a paint server
+   is a legal `fill` — but a `url()` carried through a custom property does not
+   resolve as a paint server in Chromium: the fill comes out empty and the
+   card's white border rect showed through, so the "gold" back rendered cream.
+   Verified by swapping the same variable for a flat colour, which paints.
+   The banding is therefore a CSS layer (`.foil-sheen` below).
+
+   Colour note: the first pass used the obvious #C9982F / #A97C12 sort of gold.
+   Those sit at low saturation with green in them and read as mud. Metal is
+   bright orange-biased amber, and the depth comes from specular BANDING, not
+   from darkening the base. */
+.rail-card.gold .rcard-face { background: var(--card-gold); }
+.rail-card.gold .rf-art {
+    position: absolute;
+    inset: 0;
+    display: block;
+}
+/* the artwork is 250x350 and the face is 5/7 — the same ratio, so it fills
+   exactly without distortion */
+.rail-card.gold .rf-art svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.rail-card.gold .rf-art svg,
+.rail-card.gold .rc-back svg {
+    --back-red: #E8A80F;
+    --back-line: #7A5406;
+}
+
+/* The foil sheen: the specular banding that makes metal read as metal rather
+   than as a flat brown panel, laid over the whole card — engraving included,
+   which is how real foil catches the light. `isolate` keeps the blend inside
+   the card; without it `overlay` would blend with whatever happens to be
+   behind it in the fan. */
+.rail-card.gold .rc-back,
+.rail-card.gold .rcard-face { position: relative; isolation: isolate; }
+.rail-card.gold .rc-back::after,
+.rail-card.gold .rcard-face::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    background: linear-gradient(148deg,
+        rgba(255, 255, 255, 0)    0%,
+        rgba(255, 255, 255, 0.55) 15%,
+        rgba(255, 255, 255, 0.05) 30%,
+        rgba(0, 0, 0, 0.26)       48%,
+        rgba(255, 255, 255, 0.60) 62%,
+        rgba(255, 255, 255, 0.02) 80%,
+        rgba(255, 255, 255, 0.34) 100%);
+}
+
+/* the corner stars and the printed name sit ON the engraving, so they need to
+   be above both the artwork and the sheen */
+.rail-card.gold .rf-ci,
+#rail.dealt .rail-card.gold .rail-label { position: relative; z-index: 2; }
+.rail-card.gold .rf-ci.red { color: var(--gold-ink); }
+/* the joker has no rank, so its corner index is the star on its own and can be
+   a little larger — a bare glyph in a corner otherwise reads as debris */
+.rail-card.joker .rf-ci .suit-icon { width: 1.25em; height: 1.25em; }
+
+/* The name is stamped on a plate. Dark type straight onto the filigree is
+   unreadable, and this is how a deck's seal or a gaff card's label actually
+   sits on the art — clearing its own ground rather than fighting for it. */
+#rail.dealt .rail-card.gold .rail-label {
+    inset: 38% 10%;
+    background: linear-gradient(180deg, #FFF0BE, #F3CE6B);
+    border: 1px solid var(--gold-ink);
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(74, 50, 2, 0.35);
+    color: var(--gold-ink);
+}
+#rail.dealt .rail-card.gold .rail-label { color: var(--gold-ink); }
+/* and the lit rim goes warmer still, since the card under it is already gold */
+#rail.dealt .rail-card.gold.active .rcard-face {
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.7) inset,
+        0 28px 64px rgba(0, 0, 0, 0.75),
+        0 0 48px rgba(251, 191, 36, 0.55);
 }
 #rail.dealt .rail-card.active .rc-back { filter: none; }
 
@@ -1487,6 +1606,156 @@ footer   { view-transition-name: vt-foot; }
 }
 
 /* ================= contact ================= */
+
+/* ---- magic: the performance reel ---------------------------------------
+   The clip is PORTRAIT (2160x3840, a phone-shot promo), so it is presented as
+   a vertical reel standing beside the copy rather than stretched into a
+   16:9 well — a tall frame also happens to be a card's proportions, which is
+   why it sits in the same lit, dark-edged frame the project art uses.
+
+   The video element carries `preload="metadata"` and a `#t=0.1` fragment, so
+   the browser paints the frame at 0.1s as a still and fetches nothing else
+   until it is played. That matters here: the file is ~12MB with its moov
+   atom at the end, so autoplay would mean downloading all of it on every
+   visit before anything could move. */
+.magic-body {
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) 1fr;
+    gap: clamp(1.75rem, 4vw, 3.25rem);
+    align-items: center;
+    margin-top: 2.5rem;
+}
+.reel {
+    margin: 0;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line-2);
+    background: #000;
+    box-shadow:
+        0 28px 60px rgba(0, 0, 0, 0.6),
+        0 0 34px rgba(251, 191, 36, 0.12);
+    transform: rotate(-1.4deg);      /* dealt, like every other card here */
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.5s ease;
+}
+.sec-magic:hover .reel {
+    transform: rotate(0deg) translateY(-6px);
+    box-shadow:
+        0 34px 70px rgba(0, 0, 0, 0.66),
+        0 0 46px rgba(251, 191, 36, 0.22);
+}
+.reel-video {
+    display: block;        /* video is inline by default, which leaves a gap */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+}
+/* the aspect belongs to the FRAME, not the video, so a portrait clip and a
+   landscape one can sit in the same set without either being letterboxed */
+.reel-tall { aspect-ratio: 9 / 16; }
+.reel-wide { aspect-ratio: 16 / 9; }
+
+/* ---- the rest of the set ---- */
+/* Two portrait tiles pair up on the first row and the landscape clip takes a
+   row of its own. A single auto-fit row put a 9:16 tile beside a 16:9 one, so
+   two columns ran twice as tall as the third and its caption floated level
+   with the other two videos' middles — one row, three different heights. */
+.magic-set {
+    list-style: none;
+    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    align-items: start;
+}
+@media (min-width: 760px) {
+    .magic-set { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mg-wide { grid-column: 1 / -1; }
+    /* uncapped, a full-width 16:9 frame is ~750px tall and swamps the page */
+    .mg-wide .reel { max-width: 760px; }
+}
+.mg { display: flex; flex-direction: column; gap: 1rem; }
+.mg-cap h3 {
+    font-family: var(--font-hud);
+    font-size: 0.98rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text);
+    margin: 0;
+}
+.mg-cap p {
+    margin: 0.4rem 0 0;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--text-2);
+}
+
+/* Instagram is a link, not an embed — see the markup. It gets the same frame
+   as the clips so the set reads as one row of work rather than three videos
+   and a stray link. */
+.reel-link {
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    background:
+        radial-gradient(120% 90% at 50% 0%, rgba(251, 191, 36, 0.14), transparent 60%),
+        var(--surf-1);
+}
+.reel-link-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: var(--font-hud);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    transition: color 0.3s ease;
+}
+.reel-link-mark {
+    width: 26px;
+    height: 26px;
+    fill: var(--gold);
+}
+.reel-link:hover .reel-link-body,
+.reel-link:focus-visible .reel-link-body { color: var(--text); }
+.magic-facts {
+    list-style: none;
+    margin: 1.6rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.7rem;
+    max-width: 52ch;
+}
+.magic-facts li {
+    position: relative;
+    padding-left: 1.1rem;
+    font-size: 0.96rem;
+    line-height: 1.55;
+    color: var(--text-2);
+}
+.magic-facts li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 5px;
+    height: 5px;
+    background: var(--gold);
+    transform: rotate(45deg);
+}
+.magic-facts strong { color: var(--text); font-weight: 600; }
+
+@media (max-width: 780px) {
+    /* the reel goes on top and stops eating the width */
+    .magic-body { grid-template-columns: 1fr; justify-items: start; }
+    .reel { max-width: 260px; }
+}
 
 /* ---- contact: one card, laid down horizontally -------------------------
    Cream stock on the dark band, so everything inside has to flip to dark ink

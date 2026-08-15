@@ -144,6 +144,7 @@
             ['s4',   '#contact'],
             ['s5',   '#other'],
             ['s6',   '#papers'],
+            ['s7',   '#magic'],
             ['foot', 'footer'],
         ];
 

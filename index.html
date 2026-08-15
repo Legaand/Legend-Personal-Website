@@ -45,7 +45,7 @@
             <defs>
                 <!-- quarter corner ornament, defined for the top-left -->
                 <g id="bb-corner">
-                    <g fill="none" stroke="var(--card-face)">
+                    <g fill="none" stroke="var(--back-line)">
                         <path d="M31 78 A47 47 0 0 0 78 31" stroke-width="1.1"/>
                         <path d="M31 68 A37 37 0 0 0 68 31" stroke-width="0.7"/>
                         <path d="M31 58 A27 27 0 0 0 58 31" stroke-width="1.8"/>
@@ -54,7 +54,7 @@
                         <path d="M88 31 Q84 45 74 51" stroke-width="1"/>
                         <line x1="34" y1="34" x2="45" y2="45" stroke-width="1.2"/>
                     </g>
-                    <g fill="var(--card-face)">
+                    <g fill="var(--back-line)">
                         <circle cx="50.5" cy="50.5" r="2.7"/>
                         <circle cx="39" cy="61" r="1.5"/>
                         <circle cx="61" cy="39" r="1.5"/>
@@ -64,10 +64,10 @@
                 </g>
                 <!-- spoked wheel, defined at origin -->
                 <g id="bb-wheel">
-                    <circle r="57" fill="none" stroke="var(--card-face)" stroke-width="3"/>
-                    <circle r="53.5" fill="none" stroke="var(--card-face)" stroke-width="1.4" stroke-dasharray="0.1 4.4" stroke-linecap="round"/>
-                    <circle r="50" fill="none" stroke="var(--card-face)" stroke-width="0.8"/>
-                    <g stroke="var(--card-face)" stroke-width="1.2">
+                    <circle r="57" fill="none" stroke="var(--back-line)" stroke-width="3"/>
+                    <circle r="53.5" fill="none" stroke="var(--back-line)" stroke-width="1.4" stroke-dasharray="0.1 4.4" stroke-linecap="round"/>
+                    <circle r="50" fill="none" stroke="var(--back-line)" stroke-width="0.8"/>
+                    <g stroke="var(--back-line)" stroke-width="1.2">
                         <line x1="0" y1="-48" x2="0" y2="48"/>
                         <line x1="18.4" y1="-44.3" x2="-18.4" y2="44.3"/>
                         <line x1="33.9" y1="-33.9" x2="-33.9" y2="33.9"/>
@@ -77,10 +77,10 @@
                         <line x1="33.9" y1="33.9" x2="-33.9" y2="-33.9"/>
                         <line x1="18.4" y1="44.3" x2="-18.4" y2="-44.3"/>
                     </g>
-                    <circle r="15" fill="var(--back-red)" stroke="var(--card-face)" stroke-width="2.2"/>
-                    <circle r="9.5" fill="none" stroke="var(--card-face)" stroke-width="0.8"/>
-                    <circle r="4" fill="var(--card-face)"/>
-                    <g fill="var(--card-face)">
+                    <circle r="15" fill="var(--back-red)" stroke="var(--back-line)" stroke-width="2.2"/>
+                    <circle r="9.5" fill="none" stroke="var(--back-line)" stroke-width="0.8"/>
+                    <circle r="4" fill="var(--back-line)"/>
+                    <g fill="var(--back-line)">
                         <circle cy="-12.2" r="1.5"/><circle cy="12.2" r="1.5"/>
                         <circle cx="12.2" r="1.5"/><circle cx="-12.2" r="1.5"/>
                         <circle cx="8.6" cy="-8.6" r="1.5"/><circle cx="8.6" cy="8.6" r="1.5"/>
@@ -89,20 +89,20 @@
                 </g>
                 <!-- palmette (petal cluster), defined at origin pointing down -->
                 <g id="bb-palmette">
-                    <g fill="var(--card-face)">
+                    <g fill="var(--back-line)">
                         <path d="M0 -8 Q4.5 -1 0 10 Q-4.5 -1 0 -8"/>
                         <path d="M-8.5 -6 Q-2 -2 -3 9 Q-10.5 0 -8.5 -6"/>
                         <path d="M8.5 -6 Q2 -2 3 9 Q10.5 0 8.5 -6"/>
                         <circle cx="-16" cy="2" r="1.7"/><circle cx="16" cy="2" r="1.7"/>
                         <circle cx="-22" cy="5" r="1"/><circle cx="22" cy="5" r="1"/>
                     </g>
-                    <g fill="none" stroke="var(--card-face)" stroke-width="1">
+                    <g fill="none" stroke="var(--back-line)" stroke-width="1">
                         <path d="M-12 -3 Q-20 -6 -25 1"/>
                         <path d="M12 -3 Q20 -6 25 1"/>
                     </g>
                 </g>
                 <!-- side diamond cluster, defined at origin -->
-                <g id="bb-side" fill="var(--card-face)">
+                <g id="bb-side" fill="var(--back-line)">
                     <path d="M0 -8 L4.6 0 0 8 -4.6 0 Z"/>
                     <path d="M0 -19 L2.4 -15 0 -11 -2.4 -15 Z"/>
                     <path d="M0 19 L2.4 15 0 11 -2.4 15 Z"/>
@@ -113,7 +113,7 @@
             <rect width="250" height="350" rx="13" fill="var(--card-face)"/>
             <rect x="11" y="11" width="228" height="328" rx="7" fill="var(--back-red)"/>
             <!-- frames: solid, hairline, pearl chain, hairline -->
-            <g fill="none" stroke="var(--card-face)">
+            <g fill="none" stroke="var(--back-line)">
                 <rect x="17" y="17" width="216" height="316" rx="4" stroke-width="1.8"/>
                 <rect x="21.5" y="21.5" width="207" height="307" rx="3" stroke-width="0.7"/>
                 <rect x="25.5" y="25.5" width="199" height="299" rx="2.5" stroke-width="1.6" stroke-dasharray="0.1 5" stroke-linecap="round"/>
@@ -131,14 +131,14 @@
             <use href="#bb-wheel" transform="translate(125 237)"/>
             <!-- winged center rosette where the wheels meet -->
             <g transform="translate(125 175)">
-                <g fill="none" stroke="var(--card-face)" stroke-width="1.3">
+                <g fill="none" stroke="var(--back-line)" stroke-width="1.3">
                     <path d="M-20 0 Q-36 -10 -52 -6 Q-42 0 -36 0 Q-46 6 -56 5 Q-44 12 -32 8 Q-38 16 -46 19 Q-32 18 -22 8"/>
                     <path d="M20 0 Q36 -10 52 -6 Q42 0 36 0 Q46 6 56 5 Q44 12 32 8 Q38 16 46 19 Q32 18 22 8"/>
                 </g>
-                <circle r="19" fill="var(--back-red)" stroke="var(--card-face)" stroke-width="2.4"/>
-                <circle r="13" fill="none" stroke="var(--card-face)" stroke-width="0.8"/>
-                <circle r="3.6" fill="var(--card-face)"/>
-                <g fill="var(--card-face)">
+                <circle r="19" fill="var(--back-red)" stroke="var(--back-line)" stroke-width="2.4"/>
+                <circle r="13" fill="none" stroke="var(--back-line)" stroke-width="0.8"/>
+                <circle r="3.6" fill="var(--back-line)"/>
+                <g fill="var(--back-line)">
                     <circle cy="-8.5" r="1.6"/><circle cy="8.5" r="1.6"/>
                     <circle cx="8.5" r="1.6"/><circle cx="-8.5" r="1.6"/>
                     <circle cx="6" cy="-6" r="1.2"/><circle cx="6" cy="6" r="1.2"/>
@@ -175,6 +175,7 @@
             <a href="#stack">Skills</a>
             <a href="#papers">Publications</a>
             <a href="#other">Other</a>
+            <a href="#magic">Magic</a>
         </div>
         <a class="nav-cta" href="#contact">Get in touch</a>
     </nav>
@@ -303,6 +304,31 @@
                     </span>
                 </span>
                 <span class="rail-label">Contact</span>
+            </a>
+            <!-- THE JOKER, in gold, and the last card. It is deliberately NOT
+                 an 8: the ranked run is A-7 and the joker sits outside it, so
+                 nothing below has to be renumbered and the run still reads
+                 A,2,3,4,5,6,7 top to bottom. Same deck, same engraved back,
+                 gold stock front and back — the odd card in the hand, which
+                 is the right card for the magic. No rank and no pips: the
+                 corner index is the star, and the face carries the section
+                 name like every other card in the rail. -->
+            <a class="rail-card gold joker" href="#magic" data-section="magic">
+                <span class="rail-num" aria-hidden="true">08</span>
+                <span class="rc-back"><svg><use href="#card-back"/></svg></span>
+                <span class="rc-face">
+                    <span class="rcard-face" data-suit="red">
+                        <!-- The face carries the SAME engraved artwork as the
+                             back, in gold: a double-backer, which is a real
+                             gaff card and the right joke for this section. The
+                             name is stamped over it on a plate, because dark
+                             type straight onto the filigree is unreadable. -->
+                        <span class="rf-art" aria-hidden="true"><svg><use href="#card-back"/></svg></span>
+                        <span class="rf-ci top red"><svg class="suit-icon"><use href="#joker-star"/></svg></span>
+                        <span class="rf-ci bottom red"><svg class="suit-icon"><use href="#joker-star"/></svg></span>
+                    </span>
+                </span>
+                <span class="rail-label">Magic</span>
             </a>
     </nav>
 
@@ -638,6 +664,98 @@
                 </div>
                 <span class="cc-ci bottom" aria-hidden="true">★<br>J<br>O<br>K<br>E<br>R</span>
             </div>
+        </div>
+    </section>
+
+    <!-- ================= MAGIC (the gold card) =================
+         The one section that is card magic as WORK rather than as theme:
+         a performance, shown, not explained. The copy stays dry for exactly
+         that reason — the video is the argument.
+
+         The file is a portrait 4K clip, 6s, ~12MB with its moov atom at the
+         end (no faststart), so it is click-to-play: `preload="metadata"` and
+         the `#t=0.1` fragment give the frame at 0.1s as a still without ever
+         fetching the whole thing on load. Do not switch this to autoplay
+         without shrinking the file first — that is 12MB on every visit. -->
+    <section id="magic" class="sec sec-magic">
+        <div class="wrap">
+            <header class="sec-head">
+                <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#joker-star"/></svg>Magic</p>
+                <h2>I perform close-up and stage magic.</h2>
+            </header>
+
+            <!-- The lead: the show promo, with the numbers beside it. -->
+            <div class="magic-body">
+                <figure class="reel reel-tall">
+                    <video class="reel-video" controls playsinline preload="metadata"
+                           src="media/spring-show-promo.mp4#t=0.1">
+                        Your browser can't play this video.
+                        <a href="media/spring-show-promo.mp4">Download it instead</a>.
+                    </video>
+                </figure>
+
+                <div class="magic-note">
+                    <p class="sec-sub">Promotion for our quarterly show.</p>
+                    <ul class="magic-facts">
+                        <li>Performed in front of <strong>100 people</strong>.</li>
+                        <li><strong>Spring 2026</strong>.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- The rest of the set. Every clip is click-to-play: these are
+                 multi-MB files and nothing should download until it is asked
+                 for. `preload="metadata"` plus the `#t=0.1` fragment paints
+                 the frame at 0.1s as the still, so no poster images are
+                 needed and no bytes of video move on page load. -->
+            <ul class="magic-set">
+                <li class="mg">
+                    <figure class="reel reel-tall">
+                        <video class="reel-video" controls playsinline preload="metadata"
+                               src="media/spring-show-closeup.mp4#t=0.1">
+                            Your browser can't play this video.
+                            <a href="media/spring-show-closeup.mp4">Download it instead</a>.
+                        </video>
+                    </figure>
+                    <figcaption class="mg-cap">
+                        <h3>From the same show</h3>
+                        <p>Close-up, in the room.</p>
+                    </figcaption>
+                </li>
+
+
+                <!-- Instagram is a LINK, not an embed. Their embed needs a
+                     script from instagram.com, and this site carries no
+                     third-party JavaScript; a reel also cannot be downloaded
+                     and self-hosted the way the clips above are. -->
+                <li class="mg">
+                    <a class="reel reel-tall reel-link" href="https://www.instagram.com/reel/DJ3gWhMOvEo/"
+                       target="_blank" rel="noopener">
+                        <span class="reel-link-body">
+                            <svg class="reel-link-mark" aria-hidden="true"><use href="#joker-star"/></svg>
+                            <span class="reel-link-label">Watch on Instagram</span>
+                            <span class="arrow" aria-hidden="true">&#8599;</span>
+                        </span>
+                    </a>
+                    <figcaption class="mg-cap">
+                        <h3>A classic trick</h3>
+                        <p>I designed and made the prop.</p>
+                    </figcaption>
+                </li>
+                <li class="mg mg-wide">
+                    <figure class="reel reel-wide">
+                        <video class="reel-video" controls playsinline preload="metadata"
+                               src="media/dougdoug-reaction.mp4#t=0.1">
+                            Your browser can't play this video.
+                            <a href="media/dougdoug-reaction.mp4">Download it instead</a>.
+                        </video>
+                    </figure>
+                    <figcaption class="mg-cap">
+                        <h3>DougDoug charity stream</h3>
+                        <p>A reaction from the Monterey Bay Aquarium charity stream. The piece was in memory of Rosa the sea otter.</p>
+                    </figcaption>
+                </li>
+            </ul>
         </div>
     </section>
 
