@@ -1613,18 +1613,18 @@ footer   { view-transition-name: vt-foot; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     text-align: center;
     gap: 0.75rem;
     visibility: hidden;
-    /* The stage is a metre of reserved height for four clips, and a short
-       message alone in it reads as a section that failed to load. The two
-       hairlines are what make the emptiness deliberate — the page draws
-       every other structure the same way. Sat slightly above centre: optical
-       centring, the same reason the copy is not at the true middle. */
+    /* Sits at the TOP of the stage, right under the section head — centred in
+       a metre of reserved height it read as a stray line floating in the
+       middle of nothing. The hairlines are what make the space below it
+       deliberate rather than a section that failed to load; the page draws
+       every other structure the same way. */
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-    padding-bottom: clamp(2rem, 10vh, 7rem);
+    padding-top: clamp(2.5rem, 6vh, 4.5rem);
 }
 body.plain .magic-veil { visibility: visible; }
 body.plain .magic-set  { visibility: hidden; }
@@ -1640,15 +1640,8 @@ body.plain .magic-set  { visibility: hidden; }
     /* Abril again: the g and y hang outside the line box */
     padding-bottom: 0.16em;
 }
-.veil-sub {
-    margin: 0;
-    max-width: 34ch;
-    font-size: 1.02rem;
-    line-height: 1.6;
-    color: var(--text-2);
-}
 .veil-cue {
-    margin: 0.6rem 0 0;
+    margin: 0.2rem 0 0;
     font-family: var(--font-hud);
     font-size: 0.72rem;
     font-weight: 700;
