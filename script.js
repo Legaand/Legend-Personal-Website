@@ -720,6 +720,21 @@
         return best && bestArea > vh * 0.25 ? best.id : null;
     }
 
+    // ---- magic reels: play tiles, no preview --------------------------------
+    // Each local clip is a <video preload="none">. Arming the figure hides it
+    // behind a play tile so the native player (and its first frame) never
+    // sits on the page; no-JS skips this and the video stays visible.
+    document.querySelectorAll('.reel:not(.reel-ig)').forEach((reel) => {
+        const video = reel.querySelector('.reel-video');
+        const btn = reel.querySelector('.reel-play');
+        if (!video || !btn) return;
+        reel.classList.add('armed');
+        btn.addEventListener('click', () => {
+            reel.classList.add('on');
+            video.play().catch(() => {});
+        });
+    });
+
     // first paint. Deliberately down here: onScroll reads `sections` and
     // `railCards`, which are const and would still be in the temporal dead
     // zone if this ran beside the listener registration above.

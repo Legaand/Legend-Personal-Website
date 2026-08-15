@@ -1607,77 +1607,48 @@ footer   { view-transition-name: vt-foot; }
 
 /* ================= contact ================= */
 
-/* ---- magic: the performance reel ---------------------------------------
-   The clip is PORTRAIT (2160x3840, a phone-shot promo), so it is presented as
-   a vertical reel standing beside the copy rather than stretched into a
-   16:9 well — a tall frame also happens to be a card's proportions, which is
-   why it sits in the same lit, dark-edged frame the project art uses.
+/* ---- magic: the performance set ----------------------------------------
+   Heading is the word itself, in gold, in the display face — the same idea
+   as every other section head, just the one-word label instead of a
+   sentence, because the clips underneath do the talking.
 
-   The video element carries `preload="metadata"` and a `#t=0.1` fragment, so
-   the browser paints the frame at 0.1s as a still and fetches nothing else
-   until it is played. That matters here: the file is ~12MB with its moov
-   atom at the end, so autoplay would mean downloading all of it on every
-   visit before anything could move. */
-.magic-body {
-    display: grid;
-    grid-template-columns: minmax(220px, 300px) 1fr;
-    gap: clamp(1.75rem, 4vw, 3.25rem);
-    align-items: center;
-    margin-top: 2.5rem;
+   Local clips are play tiles, not players. `.reel-play` is display:none in
+   the stylesheet; script.js hangs `.armed` on the figure, which is what
+   hides the <video> and shows the tile. No-JS therefore still gets a
+   visible player. Instagram is an iframe on their /embed URL. */
+.sec-magic h2 {
+    color: var(--gold);
+    font-size: clamp(3.2rem, 9vw, 6.5rem);
+    line-height: 0.92;
+    letter-spacing: -0.03em;
 }
-.reel {
-    margin: 0;
-    position: relative;
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid var(--line-2);
-    background: #000;
-    box-shadow:
-        0 28px 60px rgba(0, 0, 0, 0.6),
-        0 0 34px rgba(251, 191, 36, 0.12);
-    transform: rotate(-1.4deg);      /* dealt, like every other card here */
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.5s ease;
-}
-.sec-magic:hover .reel {
-    transform: rotate(0deg) translateY(-6px);
-    box-shadow:
-        0 34px 70px rgba(0, 0, 0, 0.66),
-        0 0 46px rgba(251, 191, 36, 0.22);
-}
-.reel-video {
-    display: block;        /* video is inline by default, which leaves a gap */
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    background: #000;
-}
-/* the aspect belongs to the FRAME, not the video, so a portrait clip and a
-   landscape one can sit in the same set without either being letterboxed */
-.reel-tall { aspect-ratio: 9 / 16; }
-.reel-wide { aspect-ratio: 16 / 9; }
+.sec-magic .sec-head { margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+.sec-magic .sec-sub { margin-top: 0.4rem; }
 
-/* ---- the rest of the set ---- */
-/* Two portrait tiles pair up on the first row and the landscape clip takes a
-   row of its own. A single auto-fit row put a 9:16 tile beside a 16:9 one, so
-   two columns ran twice as tall as the third and its caption floated level
-   with the other two videos' middles — one row, three different heights. */
 .magic-set {
     list-style: none;
-    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+    margin: 0;
     padding: 0;
     display: grid;
     grid-template-columns: 1fr;
-    gap: clamp(1.5rem, 3vw, 2.5rem);
-    align-items: start;
+    gap: clamp(2rem, 4vw, 3.25rem) clamp(1.25rem, 3vw, 2.5rem);
+    align-items: end;
 }
-@media (min-width: 760px) {
-    .magic-set { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 720px) {
+    .magic-set {
+        grid-template-columns: minmax(0, 0.85fr) minmax(0, 0.65fr) minmax(0, 1.1fr);
+    }
     .mg-wide { grid-column: 1 / -1; }
-    /* uncapped, a full-width 16:9 frame is ~750px tall and swamps the page */
-    .mg-wide .reel { max-width: 760px; }
 }
-.mg { display: flex; flex-direction: column; gap: 1rem; }
+.mg {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.mg-promo .reel { width: min(100%, 248px); }
+.mg-close .reel { width: min(100%, 176px); }
+.mg-ig    .reel { width: min(100%, 327px); }
+.mg-wide  .reel { width: min(100%, 520px); }
 .mg-cap h3 {
     font-family: var(--font-hud);
     font-size: 0.98rem;
@@ -1692,69 +1663,109 @@ footer   { view-transition-name: vt-foot; }
     line-height: 1.55;
     color: var(--text-2);
 }
+.mg-cap strong { color: var(--text); font-weight: 600; }
 
-/* Instagram is a link, not an embed — see the markup. It gets the same frame
-   as the clips so the set reads as one row of work rather than three videos
-   and a stray link. */
-.reel-link {
+.reel {
+    margin: 0;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line-2);
+    background: var(--surf-1);
+    box-shadow:
+        0 28px 60px rgba(0, 0, 0, 0.6),
+        0 0 34px rgba(251, 191, 36, 0.12);
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.5s ease;
+}
+.mg-promo .reel { transform: rotate(-2.1deg); }
+.mg-close .reel { transform: rotate(2.6deg); }
+.mg-wide  .reel { transform: rotate(1.1deg); }
+.reel:hover, .reel:focus-within {
+    transform: rotate(0deg) translateY(-6px);
+    box-shadow:
+        0 34px 70px rgba(0, 0, 0, 0.66),
+        0 0 46px rgba(251, 191, 36, 0.22);
+}
+.reel-tall { aspect-ratio: 9 / 16; }
+.reel-wide { aspect-ratio: 16 / 9; }
+/* Instagram's embed is a phone-shaped frame with their own chrome, so the
+   height is the 9:16 well plus the header/footer they draw around it. */
+.reel-ig {
+    aspect-ratio: auto;
+    height: 680px;
+    background: #000;
+    transform: none;
+}
+.reel-ig:hover, .reel-ig:focus-within { transform: translateY(-6px); }
+.reel-embed {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
+}
+.reel-video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+}
+
+/* the play tile. Hidden until script.js arms the reel — no-JS keeps the
+   <video> as the thing you see. */
+.reel-play { display: none; }
+.reel.armed:not(.on) .reel-play {
     display: grid;
     place-items: center;
-    text-decoration: none;
-    background:
-        radial-gradient(120% 90% at 50% 0%, rgba(251, 191, 36, 0.14), transparent 60%),
-        var(--surf-1);
-}
-.reel-link-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 0.7rem;
-    font-family: var(--font-hud);
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-2);
-    transition: color 0.3s ease;
-}
-.reel-link-mark {
-    width: 26px;
-    height: 26px;
-    fill: var(--gold);
-}
-.reel-link:hover .reel-link-body,
-.reel-link:focus-visible .reel-link-body { color: var(--text); }
-.magic-facts {
-    list-style: none;
-    margin: 1.6rem 0 0;
-    padding: 0;
-    display: grid;
-    gap: 0.7rem;
-    max-width: 52ch;
-}
-.magic-facts li {
-    position: relative;
-    padding-left: 1.1rem;
-    font-size: 0.96rem;
-    line-height: 1.55;
-    color: var(--text-2);
-}
-.magic-facts li::before {
-    content: "";
     position: absolute;
-    left: 0;
-    top: 0.62em;
-    width: 5px;
-    height: 5px;
-    background: var(--gold);
-    transform: rotate(45deg);
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background:
+        radial-gradient(120% 90% at 50% 0%, rgba(251, 191, 36, 0.16), transparent 60%),
+        var(--surf-1);
+    cursor: pointer;
+    color: var(--text-2);
+    font-family: var(--font-hud);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
 }
-.magic-facts strong { color: var(--text); font-weight: 600; }
+.reel.armed:not(.on) .reel-video {
+    /* keep it in the tree for no-JS fallbacks and for play(), but take it
+       out of sight so the tile is what you see — not a first-frame preview */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+.reel.armed.on .reel-play { display: none; }
+.reel-play-mark {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 9px 0 9px 16px;
+    border-color: transparent transparent transparent var(--gold);
+    margin-left: 3px;
+}
+.reel-play:hover,
+.reel-play:focus-visible { color: var(--text); }
+.reel-play:focus-visible { outline: 2px solid var(--gold); outline-offset: -6px; }
 
-@media (max-width: 780px) {
-    /* the reel goes on top and stops eating the width */
-    .magic-body { grid-template-columns: 1fr; justify-items: start; }
-    .reel { max-width: 260px; }
+@media (max-width: 719px) {
+    .mg-promo .reel,
+    .mg-close .reel,
+    .mg-ig .reel { width: min(100%, 260px); }
+    .reel-ig { height: 620px; }
 }
 
 /* ---- contact: one card, laid down horizontally -------------------------
@@ -1959,6 +1970,10 @@ body.plain .eyebrow { color: var(--crimson); }
 
 /* hero: same words, plain dress */
 body.plain .title { color: var(--text); }
+/* Magic keeps the metal in both modes — the word is the section's colour
+   the way the joker is gold stock. --gold is remapped to ink here, so this
+   has to name the metal directly. Deep enough to hold 3:1 on the cream. */
+body.plain .sec-magic h2 { color: #8F6A0A; }
 body.plain .pill { border-color: var(--line); color: var(--text-2); }
 
 body.plain .btn { color: var(--text); border-color: var(--line-2); }

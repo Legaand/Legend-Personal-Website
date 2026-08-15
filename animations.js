@@ -881,6 +881,7 @@
 
         batch('.stack-row', { y: 16, duration: 0.6, stagger: 0.06 });
         batch('.paper-list li', { y: 20, stagger: 0.07 });
+        batch('.mg', { y: 28, duration: 0.85, stagger: 0.1 });
 
         document.querySelectorAll('.contact-card').forEach((card) => {
             onArrival(card, 'top 85%', () => {

@@ -670,90 +670,88 @@
     <!-- ================= MAGIC (the gold card) =================
          The one section that is card magic as WORK rather than as theme:
          a performance, shown, not explained. The copy stays dry for exactly
-         that reason — the video is the argument.
+         that reason.
 
-         The file is a portrait 4K clip, 6s, ~12MB with its moov atom at the
-         end (no faststart), so it is click-to-play: `preload="metadata"` and
-         the `#t=0.1` fragment give the frame at 0.1s as a still without ever
-         fetching the whole thing on load. Do not switch this to autoplay
-         without shrinking the file first — that is 12MB on every visit. -->
+         Local clips are click-to-play with no preview: script.js arms each
+         reel so the video stays out of sight (and unfetched — preload none)
+         until the play tile is hit. No-JS keeps the <video> visible. Do not
+         switch these to autoplay — the promo is ~12MB with its moov atom at
+         the end, and that would download on every visit.
+
+         The Instagram reel is an iframe on their /embed URL, not a link and
+         not their embed.js — one third-party frame, no extra script. -->
     <section id="magic" class="sec sec-magic">
         <div class="wrap">
             <header class="sec-head">
-                <p class="kicker"><svg class="suit-icon crimson" aria-hidden="true"><use href="#joker-star"/></svg>Magic</p>
-                <h2>I perform close-up and stage magic.</h2>
+                <h2>Magic</h2>
+                <p class="sec-sub">I perform close-up and stage magic.</p>
             </header>
 
-            <!-- The lead: the show promo, with the numbers beside it. -->
-            <div class="magic-body">
-                <figure class="reel reel-tall">
-                    <video class="reel-video" controls playsinline preload="metadata"
-                           src="media/spring-show-promo.mp4#t=0.1">
-                        Your browser can't play this video.
-                        <a href="media/spring-show-promo.mp4">Download it instead</a>.
-                    </video>
-                </figure>
-
-                <div class="magic-note">
-                    <p class="sec-sub">Promotion for our quarterly show.</p>
-                    <ul class="magic-facts">
-                        <li>Performed in front of <strong>100 people</strong>.</li>
-                        <li><strong>Spring 2026</strong>.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- The rest of the set. Every clip is click-to-play: these are
-                 multi-MB files and nothing should download until it is asked
-                 for. `preload="metadata"` plus the `#t=0.1` fragment paints
-                 the frame at 0.1s as the still, so no poster images are
-                 needed and no bytes of video move on page load. -->
             <ul class="magic-set">
-                <li class="mg">
+                <li class="mg mg-promo">
                     <figure class="reel reel-tall">
-                        <video class="reel-video" controls playsinline preload="metadata"
-                               src="media/spring-show-closeup.mp4#t=0.1">
+                        <button type="button" class="reel-play" aria-label="Play spring show promo">
+                            <span class="reel-play-mark" aria-hidden="true"></span>
+                            <span class="reel-play-label">Play</span>
+                        </button>
+                        <video class="reel-video" controls playsinline preload="none"
+                               src="media/spring-show-promo.mp4">
+                            Your browser can't play this video.
+                            <a href="media/spring-show-promo.mp4">Download it instead</a>.
+                        </video>
+                    </figure>
+                    <div class="mg-cap">
+                        <h3>Quarterly show</h3>
+                        <p>Promotion for the spring show. In front of <strong>100 people</strong>, Spring 2026.</p>
+                    </div>
+                </li>
+                <li class="mg mg-close">
+                    <figure class="reel reel-tall">
+                        <button type="button" class="reel-play" aria-label="Play close-up from the same show">
+                            <span class="reel-play-mark" aria-hidden="true"></span>
+                            <span class="reel-play-label">Play</span>
+                        </button>
+                        <video class="reel-video" controls playsinline preload="none"
+                               src="media/spring-show-closeup.mp4">
                             Your browser can't play this video.
                             <a href="media/spring-show-closeup.mp4">Download it instead</a>.
                         </video>
                     </figure>
-                    <figcaption class="mg-cap">
+                    <div class="mg-cap">
                         <h3>From the same show</h3>
                         <p>Close-up, in the room.</p>
-                    </figcaption>
+                    </div>
                 </li>
-
-
-                <!-- Instagram is a LINK, not an embed. Their embed needs a
-                     script from instagram.com, and this site carries no
-                     third-party JavaScript; a reel also cannot be downloaded
-                     and self-hosted the way the clips above are. -->
-                <li class="mg">
-                    <a class="reel reel-tall reel-link" href="https://www.instagram.com/reel/DJ3gWhMOvEo/"
-                       target="_blank" rel="noopener">
-                        <span class="reel-link-body">
-                            <svg class="reel-link-mark" aria-hidden="true"><use href="#joker-star"/></svg>
-                            <span class="reel-link-label">Watch on Instagram</span>
-                            <span class="arrow" aria-hidden="true">&#8599;</span>
-                        </span>
-                    </a>
-                    <figcaption class="mg-cap">
+                <li class="mg mg-ig">
+                    <figure class="reel reel-ig">
+                        <iframe class="reel-embed"
+                                src="https://www.instagram.com/reel/DJ3gWhMOvEo/embed"
+                                title="Instagram reel — a classic trick"
+                                loading="lazy"
+                                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                                allowfullscreen></iframe>
+                    </figure>
+                    <div class="mg-cap">
                         <h3>A classic trick</h3>
                         <p>I designed and made the prop.</p>
-                    </figcaption>
+                    </div>
                 </li>
                 <li class="mg mg-wide">
                     <figure class="reel reel-wide">
-                        <video class="reel-video" controls playsinline preload="metadata"
-                               src="media/dougdoug-reaction.mp4#t=0.1">
+                        <button type="button" class="reel-play" aria-label="Play DougDoug charity stream reaction">
+                            <span class="reel-play-mark" aria-hidden="true"></span>
+                            <span class="reel-play-label">Play</span>
+                        </button>
+                        <video class="reel-video" controls playsinline preload="none"
+                               src="media/dougdoug-reaction.mp4">
                             Your browser can't play this video.
                             <a href="media/dougdoug-reaction.mp4">Download it instead</a>.
                         </video>
                     </figure>
-                    <figcaption class="mg-cap">
+                    <div class="mg-cap">
                         <h3>DougDoug charity stream</h3>
                         <p>A reaction from the Monterey Bay Aquarium charity stream. The piece was in memory of Rosa the sea otter.</p>
-                    </figcaption>
+                    </div>
                 </li>
             </ul>
         </div>
