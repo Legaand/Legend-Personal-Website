@@ -429,22 +429,50 @@
 
             /* The fan.
 
-               One card becomes five: the packet arrives squared up on the
-               front card's spot and then spreads along the arc, each card a
-               beat behind the one nearer the front. Split into arm/play
-               because the cord replays it — the rail is display:none in
-               plain mode, so coming back it would otherwise be there fully
-               assembled, which reads as a panel being toggled rather than a
-               deck being spread.
+               The deck is CARRIED IN from off the left edge as a squared
+               packet, squares up for a beat, and only then spreads along the
+               arc, each card behind the one nearer the front. Split into
+               arm/play because the cord replays it — the rail is display:none
+               in plain mode, so coming back it would otherwise be there fully
+               assembled, which reads as a panel being toggled.
 
-               It replaced a deal from off the left edge. That worked at boot
-               but the whole run travelling in at once had nothing to do with
-               cards; the spread is the move the rail is already making every
-               time you scroll, just done all at once. */
+               The packet used to fade up in place instead of travelling. With
+               every card sitting on the same spot there was nothing to see but
+               the stack appearing and then breaking apart, which read as a
+               blink rather than a hand bringing a deck in — the user's words
+               were that it "just appears and then disappears". The travel is
+               what makes the spread the second half of one gesture. */
             const cardEls = parts.map((p) => p.card);
             const numEls = parts.map((p) => p.num).filter(Boolean);
             const labelEls = parts.map((p) => p.label).filter(Boolean);
             let pending = null;
+
+            /* Where the packet waits before it is carried in, and where it is
+               swept off to on the way out: the squared deck, shifted far
+               enough left to clear the screen edge and tipped back a little
+               so it arrives at an angle. Measured off the card's own box
+               rather than a fixed number, because --rail-card is a clamp and
+               a guess would leave a sliver showing at the widest sizes.
+               #rail.dealt is overflow: hidden, so out there is genuinely out
+               of sight. */
+            const TIP = 15;            // how far the packet leans as it travels
+
+            function offstage(i, activeIdx) {
+                const p = packed(i, activeIdx);
+                const c = parts[0].card;
+                const rot = p.rotation - TIP;
+                /* A tilted card's bounding box is far wider than the card:
+                   w*cos + h*sin. Clearing only the card's own width left a
+                   corner of the packet still showing at the screen edge. */
+                const a = Math.abs(rad(rot));
+                const wide = (c.offsetWidth * Math.cos(a) + c.offsetHeight * Math.sin(a))
+                             * (p.scale || 1);
+                return Object.assign({}, p, {
+                    x: p.x - (c.offsetLeft + wide + 40),
+                    y: p.y + 34,
+                    rotation: rot,
+                });
+            }
 
             function arm() {
                 // a fan still waiting on its delay would fire into the armed
@@ -454,7 +482,7 @@
                     gsap.killTweensOf([p.card, p.back, p.face, p.label, p.num,
                                        p.face.firstElementChild,
                                        p.back && p.back.firstElementChild]);
-                    gsap.set(p.card, Object.assign(packed(i, current), { autoAlpha: 0 }));
+                    gsap.set(p.card, Object.assign(offstage(i, current), { autoAlpha: 0 }));
                     // scaleX: a flip cut short by the cord leaves a side squashed
                     gsap.set(p.face, { autoAlpha: 0, scaleX: 1 });
                     gsap.set(p.back, { autoAlpha: 1, scaleX: 1 });
@@ -466,7 +494,9 @@
                 });
             }
 
-            const FAN = 0.2;               // how long the packet takes to appear
+            const SLIDE = 0.66;            // the packet's travel in from the edge
+            const LAG = 0.024;             // per card behind the front one
+            const SQUARE = 0.1;            // a beat squared up before it spreads
             /* The flip waits for the spread to be completely finished, and
                then some. Two things happening to the same card at once reads
                as neither, and "nearly settled" is not settled: the slowest
@@ -478,10 +508,22 @@
 
             function play(delay) {
                 if (pending) pending.kill();
+                const centre = Math.round(centreOf(current));
+                const far = Math.max(centre, parts.length - 1 - centre);
+                // when the last card has landed and the packet is square
+                const FAN = SLIDE + LAG * far + SQUARE;
+                const at = (key) => (i) => packed(i, current)[key];
                 pending = gsap.timeline({ delay: delay || 0, onComplete() { pending = null; } })
-                    // the squared packet reads as a single card...
-                    .to(cardEls, { autoAlpha: 1, duration: FAN, ease: 'none' }, 0)
-                    // ...which then spreads into the run...
+                    // the packet is carried in from off the edge as one deck,
+                    // the front card leading and the rest trailing it in...
+                    .set(cardEls, { autoAlpha: 1 }, 0)
+                    .to(cardEls, {
+                        x: at('x'), y: at('y'), rotation: at('rotation'),
+                        duration: SLIDE,
+                        ease: RISE,
+                        stagger: { each: LAG, from: centre },
+                    }, 0)
+                    // ...and once it is squared up, spreads into the run...
                     .call(() => layout(current, true), null, FAN)
                     .to(numEls, { autoAlpha: 1, duration: 0.5, stagger: 0.04 }, FAN)
                     // ...and only once it has settled, the top card turns
@@ -493,10 +535,12 @@
             }
 
             /* The inverse, run BEFORE the page turns over: the run collects
-               back into the packet, so what the transition snapshots is a
-               single card rather than the whole spread. Returns how long to
-               wait in ms. */
-            const GATHER = 0.3;
+               back into the packet and carries straight on off the left edge,
+               so what the transition snapshots is an empty column. Collecting
+               and leaving are one move rather than two — squaring up and then
+               waiting to be faded out was the same "it just disappears" the
+               entrance had. Returns how long to wait in ms. */
+            const GATHER = 0.42;
             const SCOOP = 0.06;            // head start for the far end of the run
 
             function gather() {
@@ -505,12 +549,12 @@
                 const far = Math.max(centre, parts.length - 1 - centre) || 1;
                 parts.forEach((p, i) => {
                     gsap.killTweensOf(p.card);
-                    gsap.to(p.card, Object.assign(packed(i, current), {
+                    gsap.to(p.card, Object.assign(offstage(i, current), {
                         duration: GATHER,
                         // the far cards move first, so the run closes inward
                         // the way a spread does when you scoop it up
                         delay: SCOOP * (1 - Math.abs(i - centre) / far),
-                        ease: 'power2.inOut',
+                        ease: 'power2.in',
                     }));
                 });
                 gsap.to(numEls, { autoAlpha: 0, duration: GATHER * 0.7 });
