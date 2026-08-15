@@ -287,6 +287,18 @@
             // independently — inside a rotated card they inherit its angle
             parts.forEach((p) => { if (p.num) el.appendChild(p.num); });
 
+            /* ...and push the section name the other way, INTO the card face,
+               where it is printed in the pip field (the caption that used to
+               hang below the card landed on the next card's back and could not
+               be read). It has to live inside the face, not beside it, so the
+               turn scales it with the card — outside, it sat at full width
+               while the card was still edge-on. Moved here rather than in the
+               markup so the undealt no-JS rail keeps its plain label. */
+            parts.forEach((p) => {
+                const stock = p.face && p.face.querySelector('.rcard-face');
+                if (stock && p.label) stock.appendChild(p.label);
+            });
+
             // position on the arc, measured from whichever card is currently front
             function slot(i, centre) {
                 const t = (i - centre) * STEP;
@@ -429,8 +441,9 @@
 
             /* The fan.
 
-               The deck is CARRIED IN from off the left edge as a squared
-               packet, squares up for a beat, and only then spreads along the
+               The deck is CARRIED IN from off the far (right) edge as a
+               squared packet — right across the screen to the rail's column on
+               the left — squares up for a beat, then spreads along the
                arc, each card behind the one nearer the front. Split into
                arm/play because the cord replays it — the rail is display:none
                in plain mode, so coming back it would otherwise be there fully
@@ -447,28 +460,56 @@
             const labelEls = parts.map((p) => p.label).filter(Boolean);
             let pending = null;
 
-            /* Where the packet waits before it is carried in, and where it is
-               swept off to on the way out: the squared deck, shifted far
-               enough left to clear the screen edge and tipped back a little
-               so it arrives at an angle. Measured off the card's own box
-               rather than a fixed number, because --rail-card is a clamp and
-               a guess would leave a sliver showing at the widest sizes.
-               #rail.dealt is overflow: hidden, so out there is genuinely out
-               of sight. */
+            /* The two wings. The packet waits off the FAR (right) edge before
+               it is carried in, and it is scooped off the NEAR (left) edge on
+               the way out — deliberately not a mirror pair (see `nearstage`).
+               Both are the squared deck, tipped a little so it travels at an
+               angle. `#rail.dealt` spans the full viewport width so the carry
+               is not clipped back to the column (pointer-events off everywhere
+               but the cards themselves), and is overflow: hidden, so out there
+               is genuinely out of sight. */
             const TIP = 15;            // how far the packet leans as it travels
+
+            /* The card's own overhang once it is tipped: a tilted card's
+               bounding box is w*cos + h*sin, far wider than the card, and
+               clearing only its own width leaves a corner of the packet
+               showing at the screen edge. Measured rather than guessed
+               because --rail-card is a clamp. */
+            function tipped(rot, scale) {
+                const c = parts[0].card;
+                const a = Math.abs(rad(rot));
+                return (c.offsetWidth * Math.cos(a) + c.offsetHeight * Math.sin(a))
+                       * (scale || 1);
+            }
+
+            /* Where the packet is SCOOPED OFF TO on the way out: just past the
+               near (left) edge, tipped back, the way it always left. It is
+               deliberately NOT the mirror of the entrance — the deck is
+               carried the whole width of the screen coming in, but going out
+               it simply slips off the side it lives on. Sweeping it back
+               across the page to leave made the exit a second full crossing
+               and the swap top-heavy with travel. */
+            function nearstage(i, activeIdx) {
+                const p = packed(i, activeIdx);
+                const c = parts[0].card;
+                const rot = p.rotation - TIP;
+                return Object.assign({}, p, {
+                    x: p.x - (c.offsetLeft + tipped(rot, p.scale) + 40),
+                    y: p.y + 34,
+                    rotation: rot,
+                });
+            }
 
             function offstage(i, activeIdx) {
                 const p = packed(i, activeIdx);
                 const c = parts[0].card;
-                const rot = p.rotation - TIP;
-                /* A tilted card's bounding box is far wider than the card:
-                   w*cos + h*sin. Clearing only the card's own width left a
-                   corner of the packet still showing at the screen edge. */
-                const a = Math.abs(rad(rot));
-                const wide = (c.offsetWidth * Math.cos(a) + c.offsetHeight * Math.sin(a))
-                             * (p.scale || 1);
+                const rot = p.rotation + TIP;
+                const wide = tipped(rot, p.scale);
+                const span = el.clientWidth || window.innerWidth;
                 return Object.assign({}, p, {
-                    x: p.x - (c.offsetLeft + wide + 40),
+                    // card's left edge parked past the right-hand edge of the
+                    // rail's (full-width) box, plus the overhang the tilt adds
+                    x: p.x + (span - c.offsetLeft + (wide - c.offsetWidth) / 2 + 40),
                     y: p.y + 34,
                     rotation: rot,
                 });
@@ -494,9 +535,31 @@
                 });
             }
 
-            const SLIDE = 0.66;            // the packet's travel in from the edge
-            const LAG = 0.024;             // per card behind the front one
+            /* The packet's travel in — a whole viewport's width, not the width
+               of the rail column, so it takes real time to read as a carry
+               rather than a card being flicked in. It is also the **blade**:
+               the swap's reveal is a slice that rides this exact path, so this
+               number and CARRY below are what script.js hands the stylesheet
+               as `--slice-dur` and what it inverts to time each region. Change
+               one and the cut stops tracking the deck. */
+            const SLIDE = 1.4;
+            /* Per card behind the front one. Kept SHORT: over a whole
+               viewport's travel even a small lag strings the packet out into
+               a line of separate cards mid-flight, and it has to arrive as a
+               deck for the spread that follows to read as one gesture. */
+            const LAG = 0.018;
             const SQUARE = 0.1;            // a beat squared up before it spreads
+            /* The carry is the one move that does NOT use RISE. Two reasons,
+               both about the slice: expo.out is 2^-10x, which covers 90% of a
+               whole-screen crossing in the first third — the deck teleported
+               and there was nothing to follow — and no CSS bezier can match
+               it, so the blade could never stay on the cards. power2.out is
+               invertible in closed form (t → 1 - sqrt(1-t)), which is exactly
+               what script.js needs to work out when the cut passes a section.
+               This is not a fourth vocabulary curve; it is the one tween the
+               stylesheet has to share. */
+            const CARRY = 'power2.out';
+            const CARRY_CSS = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
             /* The flip waits for the spread to be completely finished, and
                then some. Two things happening to the same card at once reads
                as neither, and "nearly settled" is not settled: the slowest
@@ -520,7 +583,7 @@
                     .to(cardEls, {
                         x: at('x'), y: at('y'), rotation: at('rotation'),
                         duration: SLIDE,
-                        ease: RISE,
+                        ease: CARRY,
                         stagger: { each: LAG, from: centre },
                     }, 0)
                     // ...and once it is squared up, spreads into the run...
@@ -535,12 +598,12 @@
             }
 
             /* The inverse, run BEFORE the page turns over: the run collects
-               back into the packet and carries straight on off the left edge,
+               back into the packet and carries straight on off the near edge,
                so what the transition snapshots is an empty column. Collecting
                and leaving are one move rather than two — squaring up and then
                waiting to be faded out was the same "it just disappears" the
                entrance had. Returns how long to wait in ms. */
-            const GATHER = 0.42;
+            const GATHER = 0.42;           // only the near edge to clear
             const SCOOP = 0.06;            // head start for the far end of the run
 
             function gather() {
@@ -549,7 +612,7 @@
                 const far = Math.max(centre, parts.length - 1 - centre) || 1;
                 parts.forEach((p, i) => {
                     gsap.killTweensOf(p.card);
-                    gsap.to(p.card, Object.assign(offstage(i, current), {
+                    gsap.to(p.card, Object.assign(nearstage(i, current), {
                         duration: GATHER,
                         // the far cards move first, so the run closes inward
                         // the way a spread does when you scoop it up
@@ -580,6 +643,27 @@
             window.railArm = arm;
             window.railDeal = function (delay) { play(delay || 0); };
             window.railGather = gather;
+
+            /* The carry, published for script.js: coming back to the show, the
+               swap's reveal is a cut that travels along this exact path, so
+               the transition is timed off the deck's own numbers rather than
+               guessing at them. `inv` answers "at what fraction of the move is
+               the deck a fraction t of the way across?" — the inverse of the
+               easing — and is how each region is timed to the moment the blade
+               passes it. `CARRY` is a quadratic precisely so it inverts in
+               closed form and has an exact CSS twin.
+
+               Only the way IN is published. Leaving, the run just slips off
+               the near edge and the transition starts at the cord instead —
+               there is nothing crossing the screen for a cut to ride. */
+            window.railFlight = {
+                // carried IN: power2.out, y = 1-(1-x)^2
+                carry: {
+                    dur: SLIDE,
+                    css: CARRY_CSS,
+                    inv: function (t) { return 1 - Math.sqrt(Math.max(0, 1 - t)); },
+                },
+            };
 
             // called by script.js from the scroll handler
             window.railSetActive = function (i) {

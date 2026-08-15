@@ -147,41 +147,46 @@
             ['foot', 'footer'],
         ];
 
-        /* Time and aim each region from where the pull actually happened.
+        /* Every region gets a delay and a direction, written as CSS variables
+           the stylesheet's shared `layer-in`/`layer-out` keyframes read.
 
-           Naming a region takes it out of the root snapshot, so the radial
-           mask growing from the cord never touches it — which left the
-           "spreads out from the cord" transition running a fixed cascade in
-           DOM order no matter where on the page you were standing. Measuring
-           it here is what makes the stagger a wavefront instead of a queue.
+           Naming a region takes it out of the root snapshot, so the root mask
+           never touches it — measuring the regions here is what makes the
+           stagger a wavefront rather than a fixed cascade in DOM order.
 
-           Distance is normalised by the distance from the pull to the farthest
-           corner of the viewport, because that is exactly what 100% means
-           inside the mask's radial-gradient — so the regions turn over as the
-           mask's own edge sweeps past them. */
-        function aimWave(ox, oy) {
+           THE TWO DIRECTIONS ARE DIFFERENT TRANSITIONS, on purpose:
+             · coming back to the show, the deck is carried the whole width of
+               the screen, and `aimSlice()` runs the change along its path
+             · leaving for plain, the run just slips off the near edge, so
+               there is nothing to follow and `aimCord()` starts the change at
+               the cord, where the hand actually is
+           Don't unify them. Slicing on the way out was tried and cut: with no
+           deck crossing the screen the blade was a bare wipe, a piece of
+           motion that pointed at nothing. */
+
+        /* --- leaving: the change spreads from the cord ---------------------
+           The original, and the one the pull earns. Distance is normalised by
+           the distance from the pull to the farthest corner of the viewport,
+           because that is exactly what 100% means inside the mask's
+           radial-gradient — so regions turn over as the mask's own edge sweeps
+           past them. Measured to a region's NEAREST edge, not its centre, so a
+           section taller than the screen starts turning the moment the front
+           touches it. */
+        function aimCord(ox, oy) {
             const root = document.documentElement;
             const vw = window.innerWidth, vh = window.innerHeight;
             const far = Math.max(
                 Math.hypot(ox, oy), Math.hypot(vw - ox, oy),
                 Math.hypot(ox, vh - oy), Math.hypot(vw - ox, vh - oy)) || 1;
 
-            REGIONS.forEach(function (entry) {
-                const key = entry[0];
-                let el = null;
-                document.querySelectorAll(entry[1]).forEach(function (n) {
-                    // a name duplicated across two RENDERED elements aborts the
-                    // whole transition; display:none means not rendered, which
-                    // offsetParent does not reliably tell you
-                    if (n.getClientRects().length) el = n;
-                });
+            root.style.setProperty('--swap-x', (ox / vw) * 100 + '%');
+            root.style.setProperty('--swap-y', (oy / vh) * 100 + '%');
 
+            REGIONS.forEach(function (entry) {
+                const el = rendered(entry[1]);
                 let d = far, dx = 0, dy = 1;
                 if (el) {
                     const b = el.getBoundingClientRect();
-                    // the wave reaches a region at its NEAREST edge, not its
-                    // middle — a section taller than the screen should start
-                    // turning over the moment the front touches it
                     const nx = Math.min(Math.max(ox, b.left), b.right);
                     const ny = Math.min(Math.max(oy, b.top), b.bottom);
                     d = Math.hypot(nx - ox, ny - oy);
@@ -192,53 +197,239 @@
                     const m = Math.hypot(cx, cy);
                     if (m > 1) { dx = cx / m; dy = cy / m; }
                 }
-
                 const t = Math.min(1, d / far);
-                root.style.setProperty('--w-' + key, (0.05 + t * 0.5).toFixed(3) + 's');
-                root.style.setProperty('--w-' + key + '-x', (dx * 26).toFixed(1) + 'px');
-                root.style.setProperty('--w-' + key + '-y', (dy * 26).toFixed(1) + 'px');
+                root.style.setProperty('--w-' + entry[0], (0.05 + t * 0.5).toFixed(3) + 's');
+                root.style.setProperty('--w-' + entry[0] + '-x', (dx * 26).toFixed(1) + 'px');
+                root.style.setProperty('--w-' + entry[0] + '-y', (dy * 26).toFixed(1) + 'px');
             });
         }
 
-        /* Deal the rail back in as the wave reaches it.
-           Not on vt.finished: the whole transition runs a second or more once
-           the far regions' delays are counted, and the column would sit empty
-           for all of it. ::view-transition-new renders the new state live, so
-           the cards can arrive underneath the side region's own layer. */
+        /* A name duplicated across two RENDERED elements aborts the whole
+           transition; display:none means not rendered, which offsetParent does
+           not reliably tell you. */
+        function rendered(sel) {
+            let el = null;
+            document.querySelectorAll(sel).forEach(function (n) {
+                if (n.getClientRects().length) el = n;
+            });
+            return el;
+        }
+
+        /* --- arriving: the change runs along the deck's path ---------------
+           The cut is the card. The packet crosses the entire screen to reach
+           the rail, scoring a seam across the middle as it goes; the seam then
+           opens up and down and the new state spreads out of it. */
+        function aimSlice() {
+            const root = document.documentElement;
+            const vw = window.innerWidth, vh = window.innerHeight;
+            const dir = -1;                       // right to left, with the deck
+            // no rail (no GSAP, narrow screen): nothing is flying, so the cut
+            // goes at its own pace
+            const leg = window.railFlight && window.railFlight.carry;
+            const span = leg ? leg.dur : 0.9;
+            const inv = leg ? leg.inv : function (t) { return t; };
+            // the blade's own line, for the vertical half of the ripple: the
+            // rail's cards ride the middle of the screen
+            const midY = vh / 2;
+
+            /* The cut is raked 14° off square, so "how far along" is a
+               projection onto its own axis, not an x-coordinate. `RAKE` is the
+               CSS gradient angle below; a CSS angle is measured clockwise from
+               straight up, which in screen coordinates (y down) is the unit
+               vector (sin A, -cos A). The gradient's 0% sits at the corner
+               furthest back along it, and its 100% is the opposite corner —
+               vw*|ux| + vh*|uy| away — which is exactly what a percentage in
+               the mask means, so a region timed this way turns over as the
+               real edge reaches it. */
+            const RAKE = 284;
+            const a = RAKE * Math.PI / 180;
+            const ux = Math.sin(a), uy = -Math.cos(a);
+            const sx = ux < 0 ? vw : 0, sy = uy < 0 ? vh : 0;
+            const len = vw * Math.abs(ux) + vh * Math.abs(uy) || 1;
+            // where along the cut a point sits, 0 (not yet touched) to 1
+            const along = function (px, py) {
+                return Math.min(1, Math.max(0, ((px - sx) * ux + (py - sy) * uy) / len));
+            };
+
+            /* The other half of the mask: the seam opening up and down from
+               the middle line. These three numbers ARE the `swap-new`
+               keyframes — the seam is held at a hairline until 28% of the
+               flight while the deck is still scoring it, then opens from 2% to
+               62% of the height either side of centre, on the same easing the
+               cards ride. Kept in step by hand because a keyframe's values
+               cannot be read back out of the cascade; change one file and you
+               must change the other.
+
+               `opens(d)` inverts it: at what fraction of the flight has the
+               seam grown far enough to reach something `d` of the viewport's
+               height off the middle line? */
+            const SPLIT_HOLD = 0.28, SPLIT_MIN = 0.02, SPLIT_MAX = 0.62;
+            const opens = function (d) {
+                if (d <= SPLIT_MIN) return 0;
+                const need = Math.min(1, (d - SPLIT_MIN) / (SPLIT_MAX - SPLIT_MIN));
+                return SPLIT_HOLD + (1 - SPLIT_HOLD) * inv(need);
+            };
+
+            REGIONS.forEach(function (entry) {
+                const key = entry[0];
+                const el = rendered(entry[1]);
+                let t = 1, dy = 0, off = 0.5;
+                if (el) {
+                    const b = el.getBoundingClientRect();
+                    /* Timed at the middle of the region's VISIBLE part, and
+                       nothing else works. The leading edge was the rule while
+                       the wave came from the cord — a point source, so a
+                       region's near corner was genuinely where it arrived. A
+                       cut sweeping sideways reaches every full-width section
+                       at the same instant, which timed the whole page at 0.000
+                       and collapsed the cascade back into a crossfade. Off the
+                       visible middle, the rake does the work instead: the cut
+                       leans, so what is high on the screen turns over before
+                       what is low, and a section half-scrolled past is timed
+                       by the half you can actually see. */
+                    const l = Math.max(b.left, 0), r = Math.min(b.right, vw);
+                    const tp = Math.max(b.top, 0), bt = Math.min(b.bottom, vh);
+                    if (r > l && bt > tp) {
+                        t = along((l + r) / 2, (tp + bt) / 2);
+                        /* and how far off the middle line it is — measured at
+                           its NEAREST edge, because the seam reaches a region
+                           the moment it has opened that far, and a region
+                           straddling the middle is reached at once. As a
+                           fraction of the FULL height, which is what --split's
+                           percentages are of (50% ± split). */
+                        off = Math.max(0, Math.max(tp - midY, midY - bt)) / vh;
+                    } else {
+                        t = 1;   // entirely off screen: let it come last
+                    }
+                    const cy = (b.top + b.bottom) / 2 - midY;
+                    dy = Math.max(-1, Math.min(1, cy / (vh / 2)));
+                }
+
+                /* A region is uncovered when BOTH masks have got to it — the
+                   cut has swept past AND the seam has opened out that far — so
+                   its moment is the later of the two. Timing it on the cut
+                   alone put the top and bottom of the screen through their
+                   layer while the seam was still a hairline across the middle,
+                   which is a region animating behind a mask that has not
+                   reached it: invisible motion, and then the content simply
+                   there when the split arrived. */
+                const at = Math.max(inv(t), opens(off)) * span;
+                root.style.setProperty('--w-' + key, at.toFixed(3) + 's');
+                /* and the ripple runs out of the seam — mostly up and down,
+                   away from the line the cards travel on, with a little of the
+                   blade's own direction in it */
+                root.style.setProperty('--w-' + key + '-x', (dir * 14).toFixed(1) + 'px');
+                root.style.setProperty('--w-' + key + '-y', (dy * 36).toFixed(1) + 'px');
+            });
+
+            /* The blade itself. Raked ~14° off vertical so the cut lies along
+               the angle the packet is tipped at as it travels, rather than
+               being a ruled line the cards happen to cross. */
+            root.style.setProperty('--slice-dir', RAKE + 'deg');
+            root.style.setProperty('--slice-dur', span + 's');
+            root.style.setProperty('--slice-ease', leg ? leg.css : 'ease-out');
+            root.style.setProperty('--slice-push', (dir * 34) + 'px');
+            root.style.setProperty('--slice-skew', (dir * -1.4) + 'deg');
+        }
+
+        /* Deal the rail back in ON `vt.ready` — the deck is not following the
+           wave any more, it IS the wave, so it launches the instant the
+           transition's own animations do and the cut travels with it.
+
+           It used to wait for `--w-side` so the cards arrived as the wavefront
+           reached the column; now the column is where the flight ENDS, so
+           waiting for that would have the blade cross an empty screen and the
+           deck turn up after the change was over.
+
+           Not on vt.finished either: the whole transition runs a second or
+           more once the far regions' delays are counted. ::view-transition-new
+           renders the new state live, so the cards really are visible flying
+           across it. */
         function dealWithWave(vt) {
             if (!window.railDeal) return;
-            const wait = vt && vt.ready;
-            if (!wait) { window.railDeal(0); return; }
-            wait.then(() => {
-                const d = parseFloat(
-                    getComputedStyle(document.documentElement).getPropertyValue('--w-side'));
-                window.railDeal((d || 0.3) + 0.12);
-            }, () => window.railDeal(0));   // skipped transition: just deal
+            if (!vt || !vt.ready) { window.railDeal(0); return; }
+            /* `ready` resolving means the update callback has already run, so
+               `railArm()` is done and the deal has an armed packet to launch.
+               A SKIPPED transition — the browser skips whenever the document
+               is hidden, so: pull the cord, switch tabs — rejects it instead,
+               and can reject BEFORE the callback runs. Dealing straight off
+               that rejection put the cards in the air and then armed them
+               back offstage a tick later, and the column stayed empty for
+               good. On that path wait for the update itself. */
+            afterUpdate(vt, () => window.railDeal(0));
+        }
+
+        /* Run something once the transition's own animations are under way —
+           or, if the transition was SKIPPED (the browser skips whenever the
+           document is hidden, so: pull the cord, switch tabs), once the DOM
+           update has at least happened.
+
+           `ready` resolving already means the update callback has run. The
+           rejection is the trap: it can reject BEFORE the callback, and both
+           the deal and the gather have to run after it — the deal needs its
+           armed packet, and the gather needs the column kept alive by
+           `.rail-out`. Firing on the bare rejection put the cards in the air
+           and then armed them straight back offstage a tick later, and the
+           rail stayed empty for good. */
+        function afterUpdate(vt, fn) {
+            const updated = vt.updateCallbackDone
+                ? vt.updateCallbackDone.catch(() => {})
+                : Promise.resolve();
+            vt.ready.then(fn, () => updated.then(fn));
+        }
+
+        /* Carry the run off, then let the column go. `.rail-out` is the only
+           thing keeping the rail rendered in plain mode, so it comes off once
+           the cards are gone — a beat after the gather's own duration, which
+           railGather() reports in ms. */
+        function gatherNow() {
+            if (!window.railGather) { document.body.classList.remove('rail-out'); return; }
+            const ms = window.railGather();
+            setTimeout(() => document.body.classList.remove('rail-out'), ms + 80);
         }
 
         // The swap is animated with the View Transitions API: the browser
         // snapshots the old and new views so they can be tweened. A bare class
         // change repaints in a single frame, which is the "jump".
         function swap(next) {
+            /* Leaving: keep the rail rendered past the class flip so the run
+               can be carried off INSIDE the transition, at the same moment as
+               the change spreading from the cord. Only a live
+               `::view-transition-new` snapshot can still move, and the rail is
+               `display: none` in plain mode, so without this the column is
+               simply gone the instant the callback runs. */
+            document.body.classList.toggle('rail-out', next);
+
             if (reduce || !document.startViewTransition) {
                 apply(next);
-                if (!next) dealWithWave(null);
+                if (next) gatherNow(); else dealWithWave(null);
                 return Promise.resolve();
             }
-            // anchor the reveal to the cord, so the change reads as caused by
-            // the pull rather than arriving from nowhere
-            const r = cordEl.getBoundingClientRect();
-            const ox = r.left + r.width / 2;
-            const oy = r.top + r.height * 0.75;
+            /* Two different transitions, picked by which way we are going.
+               `.vt-cord` on the root swaps the stylesheet from the slice to
+               the radial bloom; it has to be set BEFORE startViewTransition,
+               since that is when the pseudo-elements are matched. */
             const root = document.documentElement;
-            root.style.setProperty('--swap-x', (ox / window.innerWidth) * 100 + '%');
-            root.style.setProperty('--swap-y', (oy / window.innerHeight) * 100 + '%');
-            aimWave(ox, oy);
+            root.classList.toggle('vt-cord', next);
+            if (next) {
+                // leaving: the deck just slips off the near edge, so the change
+                // starts at the cord — the hand that caused it
+                const r = cordEl.getBoundingClientRect();
+                aimCord(r.left + r.width / 2, r.top + r.height * 0.75);
+            } else {
+                // coming back: the deck crosses the whole screen, so the change
+                // runs along its path
+                aimSlice();
+            }
 
             let vt;
             try { vt = document.startViewTransition(() => apply(next)); }
-            catch (e) { apply(next); if (!next) dealWithWave(null); return Promise.resolve(); }
-            if (!next) dealWithWave(vt);
+            catch (e) {
+                apply(next);
+                if (next) gatherNow(); else dealWithWave(null);
+                return Promise.resolve();
+            }
+            if (next) afterUpdate(vt, gatherNow); else dealWithWave(vt);
             // A skipped transition (the browser skips whenever the document is
             // hidden) rejects ALL THREE of these. Catching only .finished leaves
             // unhandled rejections that surface as "InvalidStateError:
@@ -252,13 +443,13 @@
             if (busy) return;
             busy = true;
             const next = !document.body.classList.contains('plain');
-            // Leaving the show, let the run collect back into the deck first.
-            // The transition snapshots the rail the instant it starts, so a
-            // gather run alongside it would never be seen — what the snapshot
-            // has to catch is the packet, not the whole spread shrinking.
-            const lead = (next && window.railGather) ? window.railGather() : 0;
-            const go = () => swap(next).then(() => { busy = false; });
-            if (lead) setTimeout(go, lead); else go();
+            /* No lead. The gather used to run here, BEFORE the transition, and
+               `pull()` held the swap back the 480ms it took — so the cards
+               left and then, separately, the page changed. They are one moment
+               now: the swap starts on the pull and `swap()` carries the run off
+               inside it (see `.rail-out`), so the deck leaving and the change
+               spreading from the cord happen together. */
+            swap(next).then(() => { busy = false; });
         }
 
 

@@ -33,8 +33,11 @@
     --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     /* rhythm */
     --wrap: 1180px;
+    /* The side gutter, reserved either side of the content at >=1280px. ONE
+       value for both modes on purpose — the rail lives in it in the show and
+       the index lives in it in plain, and the moment the two reserve different
+       widths the whole page shifts and reflows on every pull. */
     --rail-w: clamp(212px, 16vw, 288px);
-    --index-w: clamp(190px, 14vw, 250px);
     --rail-card: clamp(126px, 11.5vw, 178px);
     --gut: clamp(1.25rem, 4vw, 3rem);
 }
@@ -416,18 +419,36 @@ a { color: inherit; }
 body.plain #cord::after { color: var(--text-2); text-shadow: none; }
 body.plain #cord:hover::after { color: var(--text); }
 
-/* ---- the swap: the new state spreads out from the cord ------------------
+/* ---- the swap: the deck SLICES the screen open --------------------------
    Animated with the View Transitions API, which snapshots the old and new
    views so they can be tweened; a bare class change repaints in one frame.
 
+   The cut is the card. The packet crosses the entire viewport on every swap,
+   and the new state is revealed along the line it travels — so the deck reads
+   as slicing the page open with the new dimension rippling out behind it.
+
    Three layers move against each other rather than one uniform motion:
-     · the NEW view is revealed through a soft radial mask that grows from the
-       cord's own position, so the change is visibly caused by the pull
-     · its leading edge is feathered, not a hard line
-     · the OLD view sinks, blurs and desaturates underneath as it is uncovered
+     · the NEW view is uncovered by a raked blade sweeping along the deck's
+       own path, feathered wide so the cut is an edge of light, not a line
+     · it arrives sheared, and the shear relaxes out — the ripple
+     · the OLD view is pushed aside ahead of the blade, blurring and
+       desaturating as it goes
+   Everything that aims or times it (`--slice-*`, and the per-region `--w-*`)
+   is written by script.js from the flight animations.js publishes, so the cut
+   genuinely tracks the cards. The fallbacks here are a plain leftward sweep,
+   which is what a no-JS or no-GSAP page gets.
+
    `--reveal` is a registered custom property; without @property a percentage
    inside mask-image cannot be interpolated and the mask would jump. */
 @property --reveal {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+}
+/* half the height of the seam, measured from the middle line the cards travel
+   on. Registered for the same reason as --reveal: a raw custom property
+   cannot be interpolated inside a gradient stop. */
+@property --split {
     syntax: '<percentage>';
     inherits: false;
     initial-value: 0%;
@@ -439,11 +460,129 @@ body.plain #cord:hover::after { color: var(--text); }
 
 ::view-transition-old(root) {
     z-index: 1;
-    animation: swap-old 1.05s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: swap-old var(--slice-dur, 1.05s) var(--slice-ease, ease-out) both;
 }
 ::view-transition-new(root) {
     z-index: 2;
-    /* origin is written by script.js from the cord's real position */
+    /* 284deg runs the gradient right→left (the deck arriving), 104deg
+       left→right (the deck leaving); the 14° off square is the angle the
+       packet is tipped at as it travels, so the cut lies along the cards
+       rather than being a ruled line they happen to cross. */
+    /* TWO masks, intersected — the cut and the opening.
+
+       `--reveal` is the CUT ITSELF: the middle of the feather, not its front
+       edge, with the band hung around it (opaque 9% behind, gone 11% ahead) so
+       the line the eye reads sits exactly where the deck is, instead of the
+       cards trailing a hard edge that has already run off the screen.
+
+       `--split` is how far the seam has opened above and below the middle
+       line the cards travel on. Intersecting the two is what makes the deck
+       score a hairline across the page and the new state then spread out of
+       it, rather than the whole height arriving at once behind the blade: for
+       the first beat only a thin strip is let through, however far the cut has
+       travelled. Both layers are needed because a single gradient can only
+       have one axis. */
+    --reveal: 0%;
+    --split: 2%;
+    mask-image:
+        linear-gradient(var(--slice-dir, 284deg),
+            #000 calc(var(--reveal) - 9%),
+            rgba(0, 0, 0, 0.5) var(--reveal),
+            transparent calc(var(--reveal) + 11%)),
+        linear-gradient(to bottom,
+            transparent calc(50% - var(--split) - 7%),
+            #000 calc(50% - var(--split)),
+            #000 calc(50% + var(--split)),
+            transparent calc(50% + var(--split) + 7%));
+    -webkit-mask-image:
+        linear-gradient(var(--slice-dir, 284deg),
+            #000 calc(var(--reveal) - 9%),
+            rgba(0, 0, 0, 0.5) var(--reveal),
+            transparent calc(var(--reveal) + 11%)),
+        linear-gradient(to bottom,
+            transparent calc(50% - var(--split) - 7%),
+            #000 calc(50% - var(--split)),
+            #000 calc(50% + var(--split)),
+            transparent calc(50% + var(--split) + 7%));
+    /* the two layers INTERSECT rather than stacking. Standard spelling only:
+       Chrome aliases `-webkit-mask-composite` onto this same property, so a
+       legacy `source-in` alongside it is simply dropped as an invalid value
+       and reads back as a duplicate. Safari has supported the standard
+       property since well before the View Transitions this rule lives in. */
+    mask-composite: intersect;
+    /* linear at the element, because the easing is declared PER KEYFRAME
+       below — the cut has to be eased exactly like the deck's tween and then
+       stop being eased for the mop-up. */
+    animation: swap-new var(--slice-dur, 1.05s) linear both;
+}
+
+/* The cut crosses on the deck's own easing (`--slice-ease` is the CSS twin of
+   the tween carrying the cards) and lands at the far edge at 92% — then the
+   last 8% is a linear run-out to 118%, dragging the feather off the screen.
+   Without that tail the trailing 11% of the band never resolves and the far
+   strip of the page finishes the transition visibly half-uncovered.
+
+   The seam is held at a hairline until 28% — the deck is still drawing it —
+   and only then opens to 62% of the height either side. **`aimWave()` inverts
+   these three numbers to time every region**, so 28% / 2% / 62% here and
+   SPLIT_HOLD / SPLIT_MIN / SPLIT_MAX in script.js are one set of constants
+   living in two files; change them together or the page stops turning over
+   with the opening.
+
+   The easing is declared PER KEYFRAME rather than on the element, so each of
+   the two properties can run on its own curve over its own stretch of the
+   timeline: `--reveal` eased across 0→92%, `--split` flat to 28% and eased
+   from there, and the linear tails left to the element. */
+@keyframes swap-new {
+    from {
+        --reveal: 0%;
+        --split: 2%;
+        animation-timing-function: var(--slice-ease, ease-out);
+        /* the 1.03 is not decoration: the sheet arrives offset and sheared, and
+           without the overhang its trailing edge exposes a bare strip at the
+           side of the screen that neither sheet covers */
+        transform: translateX(calc(var(--slice-push, -34px) * -1))
+                   skewX(var(--slice-skew, 1.4deg)) scale(1.03);
+        filter: brightness(1.35);
+    }
+    /* the seam stays a hairline while the deck is still scoring it */
+    28%  { --split: 2%; animation-timing-function: var(--slice-ease, ease-out); }
+    55%  { filter: brightness(1.05); }
+    92%  { --reveal: 100%; }
+    to   {
+        --reveal: 118%;
+        --split: 62%;
+        transform: translateX(0) skewX(0deg) scale(1);
+        filter: brightness(1);
+    }
+}
+/* forced APART from the middle line as the seam opens — scaleY, not a sink,
+   so the old page reads as being pushed aside by the split rather than fading
+   underneath it. The sideways component is the blade's, kept small so the
+   dominant motion is up and down. */
+@keyframes swap-old {
+    from { transform: translateX(0) scaleY(1) skewX(0deg);
+           filter: blur(0) saturate(1); }
+    to   { transform: translateX(calc(var(--slice-push, -34px) * 0.45)) scaleY(1.09)
+                      skewX(calc(var(--slice-skew, 1.4deg) * -1));
+           filter: blur(9px) saturate(0.3); }
+}
+
+/* ---- leaving for plain: the change spreads from the cord ----------------
+   The slice above is the ARRIVAL only. Going the other way the run just slips
+   off the near edge — there is no deck crossing the screen to follow, and a
+   blade with nothing riding it is a bare wipe pointing at nothing — so the
+   change starts at the cord, where the hand actually is. This is the original
+   transition, kept intact: a soft radial mask growing from the tassel's own
+   position (`--swap-x/--swap-y`, written by `aimCord()` from its real rect)
+   while the old view sinks, blurs and desaturates beneath it.
+
+   script.js puts `.vt-cord` on the root before starting the transition, since
+   that is when the pseudo-elements are matched. */
+:root.vt-cord::view-transition-old(root) {
+    animation: bloom-old 1.05s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+:root.vt-cord::view-transition-new(root) {
     --reveal: 0%;
     mask-image: radial-gradient(circle at var(--swap-x, 88%) var(--swap-y, 8%),
         #000 var(--reveal),
@@ -453,16 +592,21 @@ body.plain #cord:hover::after { color: var(--text); }
         #000 var(--reveal),
         rgba(0, 0, 0, 0.55) calc(var(--reveal) + 5%),
         transparent calc(var(--reveal) + 13%));
-    animation: swap-new 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+    /* MUST be reset. The slice above intersects two mask layers; with the
+       single layer here, `intersect` composites against an empty destination
+       and masks the new view out completely — a blank screen for the whole
+       transition. */
+    mask-composite: add;
+    animation: bloom-new 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-@keyframes swap-new {
+@keyframes bloom-new {
     from { --reveal: 0%;   transform: scale(1.05) rotate(0.8deg);  filter: brightness(1.3); }
     55%  {                                                          filter: brightness(1.06); }
     to   { --reveal: 155%; transform: scale(1)    rotate(0deg);    filter: brightness(1); }
 }
 /* counter-rotates the other way, so the two sheets shear against each other */
-@keyframes swap-old {
+@keyframes bloom-old {
     from { transform: scale(1)    translateY(0)    rotate(0deg);     filter: blur(0) saturate(1); }
     to   { transform: scale(0.93) translateY(18px) rotate(-1.1deg);  filter: blur(8px) saturate(0.35); }
 }
@@ -539,6 +683,11 @@ footer   { view-transition-name: vt-foot; }
 ::view-transition-old(vt-side) { animation: side-out 0.3s var(--w-side, 0s) ease both; }
 ::view-transition-new(vt-side) { animation: none; }
 @keyframes side-out { from { opacity: 1; } to { opacity: 0; } }
+/* Leaving, the rail is kept rendered so its NEW snapshot can gather the run
+   off live (see `.rail-out`). The old snapshot is then a second, frozen copy
+   of the same column sitting on top of it — the "two ropes on screen" bug in
+   another costume — so it is dropped outright rather than faded. */
+:root.vt-cord::view-transition-old(vt-side) { animation: none; opacity: 0; }
 
 /* The plain-mode index has no motion of its own, so it keeps the shared
    layer treatment, timed off the same side wave. */
@@ -825,7 +974,19 @@ footer   { view-transition-name: vt-foot; }
     transform: none;
     padding: 0;
     overflow: hidden;          /* the wheel genuinely runs past the edge */
+    /* Full viewport width, so the deck can be carried in from the FAR edge
+       and travel right across the page to the column. The cards still live
+       in the left-hand strip (they are placed at left: 46px below); the box
+       is only wide so the travel is not clipped, which is why everything but
+       a card itself is click-through — otherwise this would blanket the page.
+       right/width rather than 100vw: a fixed 100vw overshoots by the
+       scrollbar's width. */
+    right: 0;
+    width: auto;
+    pointer-events: none;
 }
+#rail.dealt .rail-card,
+#rail.dealt .rail-spine { pointer-events: auto; }
 #rail.dealt .rail-card {
     position: absolute;
     top: 50%;
@@ -885,17 +1046,34 @@ footer   { view-transition-name: vt-foot; }
 }
 #rail .pip.big { width: 46%; height: 46%; }
 
-#rail.dealt .rail-label {
+/* ---- the name is PRINTED ON THE CARD, where the pips would be -----------
+   It used to be a gold caption hanging under the card, on the page ground.
+   The fan overlaps itself, so that caption landed on top of the next card's
+   back — small gold type over a busy red engraving, effectively unreadable.
+   The face is the one surface in the rail with nothing on it and plenty of
+   contrast, so the name goes in the pip field and the corner indices stay.
+   The pips themselves come off: a rank of hearts AND a word in the same
+   space is a crowded card, and the corners already say which card it is.
+
+   animations.js moves the label inside `.rcard-face` when it deals, so the
+   name is part of the face and scales with the turn — left outside it, it
+   sat at full width while the card was still edge-on. */
+#rail.dealt .pips { display: none; }
+
+#rail.dealt .rcard-face .rail-label {
     position: absolute;
-    left: 50%;
-    top: calc(100% + 10px);
-    transform: translateX(-50%);
-    z-index: 2;
-    white-space: nowrap;
-    font-size: 0.6rem;
+    inset: 22% 12%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    /* sized off the card, which is itself viewport-clamped */
+    font-size: calc(var(--rail-card) * 0.082);
+    line-height: 1.35;
     font-weight: 700;
-    letter-spacing: 0.2em;
-    color: var(--gold);
+    letter-spacing: 0.14em;
+    white-space: normal;          /* PUBLICATIONS needs to be able to wrap */
+    color: var(--crimson-ink);    /* the card's own suit colour */
     opacity: 0;
     pointer-events: none;
 }
@@ -911,31 +1089,6 @@ footer   { view-transition-name: vt-foot; }
 }
 #rail.dealt .rail-card.active .rc-back { filter: none; }
 
-#rail.dealt .rail-label {
-    position: absolute;
-    left: 50%;
-    top: calc(100% + 10px);
-    transform: translateX(-50%);
-    z-index: 2;
-    white-space: nowrap;
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    color: var(--gold);
-    opacity: 0;
-    pointer-events: none;
-}
-#rail.dealt .rail-card:hover,
-#rail.dealt .rail-card:focus-visible { transform: none; }
-
-/* the drawn card should read as lit, not just moved */
-#rail.dealt .rail-card.active .rcard-face {
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.55) inset,
-        0 28px 64px rgba(0, 0, 0, 0.75),
-        0 0 38px rgba(251, 191, 36, 0.28);
-}
-#rail.dealt .rail-card.active .rc-back { filter: none; }
 
 @media (min-width: 1280px) {
     #rail { display: block; }
@@ -1345,6 +1498,11 @@ footer   { view-transition-name: vt-foot; }
     margin-inline: auto;
     background: var(--card-face);
     color: var(--ink);
+    /* transparent, not absent: plain mode draws this border, and a border that
+       only exists in one mode makes the card 2px taller there — which shoves
+       the footer down and turns into a slide on every cord pull, since a
+       view-transition group interpolates whatever box difference it finds */
+    border: 1px solid transparent;
     border-radius: 12px;
     padding: clamp(2.5rem, 6vw, 4rem) clamp(3rem, 9vw, 6rem);
     text-align: center;
@@ -1456,9 +1614,12 @@ body.plain {
     --crimson:   #A3122B;
     background: var(--bg);
     color: var(--text);
-    /* the rail is gone, so the page reclaims its full width */
-    padding-left: 0;
-    padding-right: 0;
+    /* NO padding override here. The gutter `body` reserves at >=1280px is the
+       same in both modes and has to stay that way — the rail lives in it here
+       and the index lives in it in plain. Zeroing it (and then handing plain
+       its own narrower `--index-w` further down) made every full-width section
+       jump sideways and reflow the moment the cord was pulled, which is
+       exactly the "identical geometry" rule this file keeps warning about. */
 }
 
 /* everything theatrical goes */
@@ -1468,6 +1629,21 @@ body.plain #dust,
 body.plain .beam,
 body.plain .cue,
 body.plain::before { display: none; }
+
+/* ...except that the rail has to survive its own exit. The run is gathered up
+   and carried off DURING the transition, not before it, so that the cards
+   leaving and the page changing are one moment rather than two. That needs the
+   column still rendered after the class flips, because a live
+   `::view-transition-new` snapshot is the only thing on screen that can still
+   move — an old snapshot is a static image. script.js hangs `.rail-out` on the
+   body for exactly as long as that takes and then drops it.
+
+   Scoped to the rail's own breakpoint: below it the rail is hidden in BOTH
+   modes, and an unscoped rule here would flash the whole column over the
+   content on a narrow screen every time the cord was pulled. */
+@media (min-width: 1280px) {
+    body.plain.rail-out #rail { display: block; }
+}
 
 /* the top bar comes back at every width and becomes the navigation */
 body.plain #nav {
@@ -1490,8 +1666,24 @@ body.plain .nav-cta {
 }
 body.plain .nav-cta:hover { background: var(--crimson); }
 
-/* suits and pips are the theme, not the content */
-body.plain .suit-icon,
+/* Suits and pips are the theme, not the content.
+   NOT `display: none`, though. `.suit-icon` sits inside `.kicker` / `.eyebrow`,
+   which are inline-flex, so removing it from the flow changes what determines
+   the flex line's height — every section head came out 1px taller in plain
+   mode, and eight of those stacked up meant every section below the fold sat
+   several px off between the modes. A view-transition group interpolates
+   whatever box difference it finds, so that drift became a visible slide on
+   every pull. Kept in the flow at zero width instead (the negative margin eats
+   the flex gap), which looks identical and measures identical. */
+body.plain .suit-icon { visibility: hidden; width: 0; }
+/* and the gap goes with it, or the text keeps the space the suit used to sit
+   in. Zeroing the gap rather than pulling the icon back with a negative margin
+   because these four carry FOUR different gaps (0.12em to 0.7em) — one magic
+   number fits one of them and shunts the other three into their own text. */
+body.plain .kicker,
+body.plain .eyebrow,
+body.plain .nav-mark,
+body.plain .rf-ci { gap: 0; }
 body.plain .pill .dot { display: none; }
 body.plain .kicker,
 body.plain .eyebrow { color: var(--crimson); }
@@ -1533,7 +1725,7 @@ body.plain .proj:hover .proj-shot {
 /* contact stops being a playing card */
 body.plain .contact-card {
     background: var(--surf-1);
-    border: 1px solid var(--line);
+    border-color: var(--line);       /* the box itself is declared above */
     box-shadow: 0 14px 40px rgba(20, 20, 26, 0.1);
     transform: none;
 }
@@ -1590,9 +1782,15 @@ body.plain #index {
 .index-item.active { color: var(--text); }
 .index-item.active::before { height: 100%; }
 
-/* the index owns the left margin, so the page steps in to clear it */
+/* The index shows in the gutter the rail already reserved. It does NOT get a
+   reservation of its own: `body` reserves `--rail-w` either side at this same
+   breakpoint, and a narrower plain-mode value (it was `--index-w`, 250px
+   against the rail's 288px) made every full-width section 76px wider and 38px
+   further left in plain mode — so the whole page shifted and reflowed on every
+   pull. That is the "the two modes must have identical geometry" rule: plain
+   overrides may change colour and visibility, never padding, height or
+   spacing. The index is simply narrower than the space it sits in. */
 @media (min-width: 1280px) {
-    body.plain { padding-left: var(--index-w); padding-right: var(--index-w); }
     body.plain #index { display: block; }
 }
 
